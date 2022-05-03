@@ -129,11 +129,6 @@ export const startStudio = async (logger: sdk.Logger, params: WebWorkerParams) =
     studioHandle = spawn(file, [], { env, stdio: 'inherit' })
   } else if (process.core_env.DEV_STUDIO_PATH) {
     const file = path.resolve(process.core_env.DEV_STUDIO_PATH, 'index.js')
-    // copy the file to a local folder
-    fse.copy(file, path.dirname(env.ROOT_PATH))
-    const newFile = path.resolve(env.ROOT_PATH, 'index.js')
-    console.log('Copying studio to', newFile)
-    console.log('new file', newFile)
     studioHandle = fork(file, undefined, { execArgv: [], env, cwd: path.dirname(file) })
   }
 

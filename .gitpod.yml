@@ -9,7 +9,15 @@ tasks:
       DEV_STUDIO_PATH=/workspace/botpress/studio/packages/studio-be/out yarn run start
     openMode: split-right
     name: Builds & run Botpress
-
+  - command: |
+      yarn watch
+    openMode: split-right
+    name: Watch Botpress
+  - command: |
+      cd studio/
+      yarn watch
+    openMode: split-right
+    name: Watch Studio
 vscode:
   extensions:
     - esbenp.prettier-vscode@5.7.1:GDba64T6G+TUi1qmc6BE3A==

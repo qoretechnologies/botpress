@@ -2,15 +2,15 @@ import * as sdk from 'botpress/sdk'
 import lang from 'common/lang'
 import { makeNLUPassword } from 'common/nlu-token'
 import { createForGlobalHooks } from 'core/app/api'
-import { BotService, BotMonitoringService } from 'core/bots'
+import { BotMonitoringService, BotService } from 'core/bots'
 import { GhostService } from 'core/bpfs'
 import { CMSService } from 'core/cms'
 import { BotpressConfig, ConfigProvider } from 'core/config'
 import { buildUserKey, converseApiEvents } from 'core/converse'
 import Database from 'core/database'
-import { StateManager, DecisionEngine, DialogEngine, DialogJanitor, WellKnownFlags } from 'core/dialog'
+import { DecisionEngine, DialogEngine, DialogJanitor, StateManager, WellKnownFlags } from 'core/dialog'
 import { SessionIdFactory } from 'core/dialog/sessions'
-import { addStepToEvent, EventCollector, StepScopes, StepStatus, EventEngine, Event } from 'core/events'
+import { addStepToEvent, Event, EventCollector, EventEngine, StepScopes, StepStatus } from 'core/events'
 import { AlertingService, MonitoringService } from 'core/health'
 import { LoggerDbPersister, LoggerFilePersister, LoggerProvider, LogsJanitor } from 'core/logger'
 import { MessagingService } from 'core/messaging'
@@ -20,8 +20,8 @@ import { ModuleLoader } from 'core/modules'
 import { QnaService } from 'core/qna'
 import { RealtimeService } from 'core/realtime'
 import { AuthService } from 'core/security'
-import { StatsService, AnalyticsService } from 'core/telemetry'
-import { ActionServersConfigSchema, Hooks, HookService, HintsService } from 'core/user-code'
+import { AnalyticsService, StatsService } from 'core/telemetry'
+import { ActionServersConfigSchema, HintsService, Hooks, HookService } from 'core/user-code'
 import { DataRetentionJanitor, DataRetentionService, WorkspaceService } from 'core/users'
 import { WrapErrorsWith } from 'errors'
 import { inject, injectable, tagged } from 'inversify'
@@ -35,10 +35,10 @@ import { startLocalActionServer, startLocalNLUServer } from 'orchestrator'
 import { startLocalMessagingServer } from 'orchestrator/messaging-server'
 import path from 'path'
 import plur from 'plur'
-
 import { getDebugScopes, setDebugScopes } from '../../debug'
 import { HTTPServer } from './server'
 import { TYPES } from './types'
+
 
 export interface StartOptions {
   modules: sdk.ModuleEntryPoint[]
@@ -121,20 +121,35 @@ export class Botpress {
     AppLifecycle.setDone(AppLifecycleEvents.CONFIGURATION_LOADED)
 
     this.displayRedisChannelPrefix()
+    console.log('1')
     await this.restoreDebugScope()
+    console.log('2')
     await this.checkJwtSecret()
+    console.log('3')
     await this.loadModules(options.modules)
+    console.log('4')
     await this.migrationService.initialize()
+    console.log('5')
     await this.cleanDisabledModules()
+    console.log('6')
     await this.initializeServices()
+    console.log('7')
     await this.checkEditionRequirements()
+    console.log('8')
     await this.deployAssets()
+    console.log('9')
     await this.maybeStartLocalSTAN()
+    console.log('10')
     await this.startRealtime()
+    console.log('11')
     await this.startServer()
+    console.log('12')
     await this.maybeStartLocalMessagingServer()
-    await this.discoverBots()
+    console.log('13')
+    //await this.discoverBots()
+    console.log('14')
     await this.maybeStartLocalActionServer()
+    console.log('15')
 
     if (this.config.sendUsageStats) {
       await this.statsService.start()
@@ -338,27 +353,29 @@ export class Botpress {
 
   @WrapErrorsWith('Error while discovering bots')
   async discoverBots(): Promise<void> {
+    try {
+    console.log('discoverbots0')
     await AppLifecycle.waitFor(AppLifecycleEvents.MODULES_READY)
     const botsRef = await this.workspaceService.getBotRefs()
     const botsIds = await this.botService.getBotsIds()
     const unlinked = _.difference(botsIds, botsRef)
     const deleted = _.difference(botsRef, botsIds)
-
+    console.log('discoverbots1')
     if (unlinked.length) {
       this.logger.warn(
         `Some unlinked bots exist on your server, to enable them add them to workspaces.json [${unlinked.join(', ')}]`
       )
     }
-
+    console.log('discoverbots2')
     if (deleted.length) {
       this.logger.warn(
         `Some bots have been deleted from the disk but are still referenced in your workspaces.json file.
           Please delete them from workspaces.json to get rid of this warning. [${deleted.join(', ')}]`
       )
     }
-
+    console.log('discoverbots3')
     const bots = await this.botService.getBots()
-
+    console.log('discoverbots4')
     for (const workspace of await this.workspaceService.getWorkspaces()) {
       const pipeline = await this.workspaceService.getPipeline(workspace.id)
       if (pipeline && pipeline.length > 4) {
@@ -367,21 +384,25 @@ export class Botpress {
         )
       }
     }
-
+    console.log('discoverbots5')
     const disabledBots = [...bots.values()].filter(b => b.disabled).map(b => b.id)
     const botsToMount = _.without(botsRef, ...disabledBots, ...deleted)
-
+    console.log('discoverbots6')
     disabledBots.forEach(botId => BotService.setBotStatus(botId, 'disabled'))
-
+    console.log('discoverbots7')
     this.logger.info(
       `Discovered ${botsToMount.length} bot${botsToMount.length === 1 ? '' : 's'}${
         botsToMount.length ? `, mounting ${botsToMount.length === 1 ? 'it' : 'them'}...` : ''
       }`
     )
 
+    console.log('discoverbots8')
     const maxConcurrentMount = parseInt(process.env.MAX_CONCURRENT_MOUNT || '5')
     await Promise.map(botsToMount, botId => this.botService.mountBot(botId), { concurrency: maxConcurrentMount })
+  } catch (e) {
+    console.log(e)
   }
+}
 
   private async initializeServices() {
     await this.loggerDbPersister.initialize(this.database, await this.loggerProvider('LogDbPersister'))

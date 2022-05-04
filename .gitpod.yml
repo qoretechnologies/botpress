@@ -1,14 +1,21 @@
 tasks:
   - init: |
       nvm install v12.18.1
+      yarn cache clean
       yarn && yarn build
-      cd studio/
-      yarn && yarn build && yarn package
-    command: |
-      nvm install v12.18.1
-      DEV_STUDIO_PATH=/workspace/botpress/studio/packages/studio-be/out yarn run start
+    command: yarn watch
     openMode: split-right
-    name: Builds & run Botpress
+    name: botpress
+  - init: |
+      nvm install v12.18.1
+      cd /workspace
+      git clone https://github.com/botpress/studio.git
+      cd studio/
+      yarn cache clean
+      yarn && yarn build
+    command: cd /workspace/studio && yarn watch
+    openMode: split-right
+    name: studio
 vscode:
   extensions:
     - esbenp.prettier-vscode@5.7.1:GDba64T6G+TUi1qmc6BE3A==

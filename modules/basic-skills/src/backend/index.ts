@@ -1,12 +1,10 @@
 import 'bluebird-global'
 import * as sdk from 'botpress/sdk'
-import _ from 'lodash'
-
 import en from '../translations/en.json'
 import es from '../translations/es.json'
 import fr from '../translations/fr.json'
-
 import apiCall from './callApi'
+import qorusApiCall from './callQorusApi'
 import choice from './choice'
 import email from './email'
 import slot from './slot'
@@ -31,6 +29,12 @@ const skillsToRegister: sdk.Skill[] = [
     name: 'module.basic-skills.callApi',
     icon: 'code-block',
     flowGenerator: apiCall.generateFlow
+  },
+  {
+    id: 'CallQorusAPI',
+    name: 'module.basic-skills.callQorusApi',
+    icon: 'code-block',
+    flowGenerator: qorusApiCall.generateFlow
   },
   {
     id: 'Slot',

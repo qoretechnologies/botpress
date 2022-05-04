@@ -1,11 +1,11 @@
-import React from 'react'
-import { Input, Label } from 'reactstrap'
-import { Tabs, Tab, Row, Col, Alert } from 'react-bootstrap'
-import Select from 'react-select'
-import style from './style.scss'
-import { BotpressTooltip } from 'botpress/tooltip'
 import { LinkDocumentationProvider } from 'botpress/documentation'
+import { BotpressTooltip } from 'botpress/tooltip'
 import { nanoid } from 'nanoid'
+import React from 'react'
+import { Alert, Col, Row, Tab, Tabs } from 'react-bootstrap'
+import Select from 'react-select'
+import { Input, Label } from 'reactstrap'
+import style from './style.scss'
 
 const methodOptions = [
   { label: 'Get', value: 'get' },
@@ -21,7 +21,7 @@ const memoryOptions = [
   { label: 'User', value: 'user' }
 ]
 
-const stringify = obj => {
+const stringify = (obj) => {
   return JSON.stringify(obj, null, 2)
 }
 
@@ -44,9 +44,9 @@ export class CallAPI extends React.Component {
     invalidJson: false
   }
 
-  getInitialDataProps = propsKey => this.props.initialData[propsKey]
+  getInitialDataProps = (propsKey) => this.props.initialData[propsKey]
   getOrDefault = (propsKey, stateKey) => this.getInitialDataProps(propsKey) || this.state[stateKey]
-  createSelectOption = data => (data ? { value: data, label: data } : undefined)
+  createSelectOption = (data) => (data ? { value: data, label: data } : undefined)
 
   componentDidMount() {
     if (this.props.initialData) {
@@ -81,7 +81,7 @@ export class CallAPI extends React.Component {
     }
   }
 
-  handleHeadersChange = event => {
+  handleHeadersChange = (event) => {
     const value = event.target.value
 
     try {
@@ -94,15 +94,15 @@ export class CallAPI extends React.Component {
     }
   }
 
-  handleInputChange = event => {
+  handleInputChange = (event) => {
     this.setState({ [event.target.name]: event.target.value })
   }
 
-  handleMemoryChange = option => {
+  handleMemoryChange = (option) => {
     this.setState({ selectedMemory: option })
   }
 
-  handleMethodChange = option => {
+  handleMethodChange = (option) => {
     this.setState({ selectedMethod: option })
   }
 

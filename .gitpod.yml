@@ -7,7 +7,7 @@ tasks:
     openMode: split-right
     name: botpress
   - init: |
-      nvm install v12.18.1
+      nvm use v12.18.1
       cd /workspace/botpress-studio
       yarn && yarn build
     command: yarn watch

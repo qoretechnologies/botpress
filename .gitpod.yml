@@ -3,15 +3,16 @@ tasks:
       nvm install v12.18.1
       yarn cache clean
       yarn && yarn build
+    command: yarn watch
     openMode: split-right
     name: botpress
   - init: |
       nvm install v12.18.1
       cd /workspace
-      git clone https://github.com/botpress/studio.git
-      cd studio/
-      yarn cache clean
+      git clone https://github.com/qoretechnologies/botpress-studio.git
+      cd botpress-studio
       yarn && yarn build
+    command: yarn watch
     openMode: split-right
     name: studio
 vscode:

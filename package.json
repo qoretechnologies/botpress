@@ -22,6 +22,7 @@
   "scripts": {
     "postinstall": "yarn cmd postinstall",
     "start": "yarn workspace botpress start",
+    "start-with-studio": "DEV_STUDIO_PATH=/workspace/botpress-studio/packages/studio-be/out yarn run start",
     "cmd": "yarn run gulp",
     "build": "yarn cmd build",
     "watch": "yarn cmd watch",

@@ -3,7 +3,6 @@ tasks:
       nvm install v12.18.1
       yarn cache clean
       yarn && yarn build
-    command: yarn watch
     openMode: split-right
     name: botpress
   - init: |
@@ -13,7 +12,6 @@ tasks:
       cd studio/
       yarn cache clean
       yarn && yarn build
-    command: cd /workspace/studio && yarn watch
     openMode: split-right
     name: studio
 vscode:

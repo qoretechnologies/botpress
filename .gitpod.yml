@@ -8,9 +8,7 @@ tasks:
     name: botpress
   - init: |
       nvm install v12.18.1
-      cd /workspace
-      git clone https://github.com/qoretechnologies/botpress-studio.git
-      cd botpress-studio
+      cd /workspace/botpress-studio
       yarn && yarn build
     command: yarn watch
     openMode: split-right
@@ -21,7 +19,8 @@ vscode:
     - oderwat.indent-rainbow@7.4.0:fDVCkGVYd1R2lfcs1tHk+Q==
     - humao.rest-client@0.24.4:zy4YO0p/vGcDbgPap4k4+A==
     - wayou.vscode-todo-highlight@1.0.4:TEjqQVt71hdvHUZA7eWgHA==
-
+additionalRepositories:
+  - url: https://github.com/qoretechnologies/botpress-studio.git
 github:
   prebuilds:
     master: true

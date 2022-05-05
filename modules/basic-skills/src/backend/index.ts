@@ -33,7 +33,7 @@ const skillsToRegister: sdk.Skill[] = [
   {
     id: 'CallQorusAPI',
     name: 'module.basic-skills.callQorusApi',
-    icon: 'code-block',
+    icon: 'qore',
     flowGenerator: qorusApiCall.generateFlow
   },
   {

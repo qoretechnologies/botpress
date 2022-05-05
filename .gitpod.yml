@@ -3,24 +3,42 @@ tasks:
       nvm install v12.18.1
       yarn cache clean
       yarn && yarn build
-    command: yarn watch
     openMode: split-right
     name: botpress
   - init: |
-      nvm use v12.18.1
+      nvm install v12.18.1
       cd /workspace/botpress-studio
-      yarn && yarn build
-    command: yarn watch
+      yarn
+    command: |
+      cd /workspace/botpress-studio
+      nvm install v12.18.1
+      yarn watch
+  - init: |
+      cd /workspace/botpress/modules/basic-skills
+      nvm install v12.18.1
+      yarn
+    command: |
+      cd /workspace/botpress/modules/basic-skills
+      nvm install v12.18.1
+      yarn watch
     openMode: split-right
     name: studio
 vscode:
   extensions:
-    - esbenp.prettier-vscode@5.7.1:GDba64T6G+TUi1qmc6BE3A==
-    - oderwat.indent-rainbow@7.4.0:fDVCkGVYd1R2lfcs1tHk+Q==
-    - humao.rest-client@0.24.4:zy4YO0p/vGcDbgPap4k4+A==
-    - wayou.vscode-todo-highlight@1.0.4:TEjqQVt71hdvHUZA7eWgHA==
+    - oderwat.indent-rainbow
+    - mintlify.document
+    - streetsidesoftware.code-spell-checker
+    - tombonnike.vscode-status-bar-format-toggle
+    - github.copilot
+    - fivepointseven.node-version
+    - kejun.devtoys
+    - esbenp.prettier-vscode
+    - visualstudioexptteam.vscodeintellicode
+    - styled-components.vscode-styled-components
+    - kejun.devtoys
 additionalRepositories:
   - url: https://github.com/qoretechnologies/botpress-studio.git
+workspaceLocation: workspace.code-workspace
 github:
   prebuilds:
     master: true

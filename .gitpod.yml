@@ -38,6 +38,7 @@ vscode:
     - visualstudioexptteam.vscodeintellicode
     - styled-components.vscode-styled-components
     - kejun.devtoys
+    - mattpocock.ts-error-translator
 additionalRepositories:
   - url: https://github.com/qoretechnologies/botpress-studio.git
 workspaceLocation: /workspace/botpress/botpress.code-workspace

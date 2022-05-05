@@ -13,6 +13,8 @@ tasks:
       cd /workspace/botpress-studio
       nvm install v12.18.1
       yarn watch
+    openMode: split-right
+    name: studio
   - init: |
       cd /workspace/botpress/modules/basic-skills
       nvm install v12.18.1
@@ -22,7 +24,7 @@ tasks:
       nvm install v12.18.1
       yarn watch
     openMode: split-right
-    name: studio
+    name: qorus-skill
 vscode:
   extensions:
     - oderwat.indent-rainbow
@@ -38,7 +40,7 @@ vscode:
     - kejun.devtoys
 additionalRepositories:
   - url: https://github.com/qoretechnologies/botpress-studio.git
-workspaceLocation: workspace.code-workspace
+workspaceLocation: /workspace/botpress/botpress.code-workspace
 github:
   prebuilds:
     master: true

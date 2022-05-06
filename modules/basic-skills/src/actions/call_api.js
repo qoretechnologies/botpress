@@ -23,9 +23,12 @@ const callApi = async (url, method, body, memory, variable, headers) => {
       data: renderedBody
     })
 
+    console.log('calling API', response, memory, variable)
+
     event.state[memory][variable] = { body: response.data, status: response.status }
     event.state.temp[`valid${keySuffix}`] = true
   } catch (error) {
+    console.log('calling API ERROR', error)
     const errorCode = (error.response && error.response.status) || error.code || ''
     bp.logger.error(`Error: ${errorCode} while calling resource "${url}"`)
 

@@ -1,5 +1,4 @@
 import * as sdk from 'botpress/sdk'
-import _ from 'lodash'
 
 const generateFlow = async (data: any, metadata: sdk.FlowGeneratorMetadata): Promise<sdk.FlowGenerationResult> => {
   return {
@@ -30,7 +29,7 @@ const createNodes = data => {
             memory: data.memory,
             variable: data.variable
           }
-        }
+        },
       ],
       next: [{ condition: 'true', node: '#' }]
     }

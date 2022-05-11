@@ -41,6 +41,7 @@ const maybeParseYaml = (yaml) => {
 }
 
 const callApi = async (url, method, body, memory, variable, headers) => {
+  console.log(event.state.session)
   // Use context to flatten event object
   const context = {
     event,
@@ -56,7 +57,7 @@ const callApi = async (url, method, body, memory, variable, headers) => {
   renderedBody.args = reduce(
     renderedBody.args.value,
     (acc, val, key) => {
-      return { ...acc, [key]: maybeParseYaml(val.value) }
+      return { ...acc, [key]: val }
     },
     {}
   )
@@ -65,8 +66,6 @@ const callApi = async (url, method, body, memory, variable, headers) => {
   delete renderedBody.desc
   delete renderedBody.supports_request
   delete renderedBody.use_args
-
-  console.log('renderedBody', renderedBody)
 
   try {
     const response = await axios({

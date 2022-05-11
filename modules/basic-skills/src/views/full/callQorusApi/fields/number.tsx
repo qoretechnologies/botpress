@@ -24,7 +24,7 @@ const NumberField: FunctionComponent<INumberField & any> = ({ name, onChange, va
       name={`field-${name}`}
       className={fill && Classes.FILL}
       value={value ?? default_value ?? ''}
-      onChange={handleInputChange}
+      //onChange={handleInputChange}
       type="number"
       step={type === 'int' || type === 'number' ? 1 : 0.1}
       rightElement={

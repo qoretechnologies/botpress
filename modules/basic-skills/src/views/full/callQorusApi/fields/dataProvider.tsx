@@ -137,6 +137,7 @@ export const maybeBuildOptionProvider = (provider: IProviderType | string): IPro
   }
   // split the provider by /
   const [type, name, ...path] = provider.split('/')
+  console.log(type, name, path)
   // Return it
   return {
     type,
@@ -173,10 +174,7 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
             ]
           },
           ...(optionProvider.path
-            ? optionProvider?.path
-                .replace('/', '')
-                .split('/')
-                .map((item) => ({ value: item, values: [{ name: item }] }))
+            ? optionProvider?.path.split('/').map((item) => ({ value: item, values: [{ name: item }] }))
             : [])
         ]
       : []

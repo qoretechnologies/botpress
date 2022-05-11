@@ -1,23 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import style from '../style.scss'
 import DataProvider, { IProviderType } from './fields/dataProvider'
+import { validateField } from './validator'
 
-export const CallQorusAPI = ({ onValidChanged, onDataChanged }) => {
-  const [provider, setProvider] = useState<IProviderType | string>(undefined)
+export const CallQorusAPI = ({ onValidChanged, onDataChanged, initialData }) => {
+  const [provider, setProvider] = useState<IProviderType | string>(initialData?.provider)
+
+  console.log(provider)
 
   useEffect(() => {
-    onValidChanged(provider !== undefined)
-  })
-
-  const updateData = (data: IProviderType | string) => {
-    console.log('CallQorusAPI set', data)
-    setProvider(data)
-    onDataChanged(data)
-  }
+    // Check if the provider is valid
+    const isValid = validateField('type-selector', provider)
+    // This call enabled / disables the submit button
+    onValidChanged(isValid)
+    // Save the data if they are valid
+    if (isValid) {
+      onDataChanged({ randomId: '123', provider })
+    }
+  }, [provider])
 
   return (
     <div className={style.modalContent}>
-      <DataProvider name="test" value={provider} onChange={(n, v) => updateData(v)} requiresRequest />
+      <DataProvider name="test" value={provider} onChange={(n, v) => setProvider(v)} requiresRequest />
     </div>
   )
 }

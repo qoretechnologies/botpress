@@ -1,5 +1,6 @@
 {
   "callApi": "Llamar API",
+  "callQorusAPI": "Qorus",
   "choice": "Elección",
   "fullName": "Habilidades Básicas",
   "sendEmail": "Enviar Email",

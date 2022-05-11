@@ -15,7 +15,10 @@ const callApi = async (url, method, body, memory, variable, headers) => {
   const renderedBody = bp.cms.renderTemplate(body, context)
   const keySuffix = args.randomId ? `_${args.randomId}` : ''
 
+  
   try {
+    console.log('memory, variable', memory, variable)
+    console.log(`Calling ${url} with ${method} and content: ${renderedBody}`)
     const response = await axios({
       method,
       url,
@@ -23,7 +26,7 @@ const callApi = async (url, method, body, memory, variable, headers) => {
       data: renderedBody
     })
 
-    console.log('calling API', response, memory, variable)
+    console.log('response', response)
 
     event.state[memory][variable] = { body: response.data, status: response.status }
     event.state.temp[`valid${keySuffix}`] = true

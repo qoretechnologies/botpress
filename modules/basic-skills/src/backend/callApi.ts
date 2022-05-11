@@ -12,7 +12,7 @@ const generateFlow = async (data: any, metadata: sdk.FlowGeneratorMetadata): Pro
   }
 }
 
-const createNodes = data => {
+const createNodes = (data) => {
   const nodes: sdk.SkillFlowNode[] = [
     {
       name: 'entry',
@@ -29,8 +29,9 @@ const createNodes = data => {
             memory: data.memory,
             variable: data.variable
           }
-        },
+        }
       ],
+
       next: [{ condition: 'true', node: '#' }]
     }
   ]

@@ -2,18 +2,22 @@ import React, { useEffect, useState } from 'react'
 import style from '../style.scss'
 import DataProvider, { IProviderType } from './fields/dataProvider'
 
-export const CallQorusAPI = ({ onValidChanged }) => {
+export const CallQorusAPI = ({ onValidChanged, onDataChanged }) => {
   const [provider, setProvider] = useState<IProviderType | string>(undefined)
 
   useEffect(() => {
-    onValidChanged(true)
+    onValidChanged(provider !== undefined)
   })
 
-  console.log(provider)
+  const updateData = (data: IProviderType | string) => {
+    console.log('CallQorusAPI set', data)
+    setProvider(data)
+    onDataChanged(data)
+  }
 
   return (
     <div className={style.modalContent}>
-      <DataProvider name="test" value={provider} onChange={(n, v) => setProvider(v)} requiresRequest />
+      <DataProvider name="test" value={provider} onChange={(n, v) => updateData(v)} requiresRequest />
     </div>
   )
 }

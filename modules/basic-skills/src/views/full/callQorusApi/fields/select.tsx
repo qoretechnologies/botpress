@@ -1,5 +1,6 @@
-import { Button, Classes, ControlGroup, Icon, MenuItem, Tooltip } from '@blueprintjs/core'
-import { Select } from '@blueprintjs/select'
+import { Button, Classes, Icon } from '@blueprintjs/core'
+import { ReqoreButton, ReqoreDropdown, ReqorePopover } from '@qoretechnologies/reqore'
+import { IReqoreButtonProps } from '@qoretechnologies/reqore/dist/components/Button'
 import { includes } from 'lodash'
 import React, { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -23,10 +24,7 @@ export interface ISelectField {
 }
 
 export const StyledDialogSelectItem = styled.div`
-  &:not(:last-child) {
-    margin-bottom: 10px;
-  }
-
+  margin-bottom: 10px;
   max-height: 150px;
   overflow: hidden;
   position: relative;
@@ -151,57 +149,46 @@ const SelectField: React.FC<ISelectField & any> = ({
   }
 
   return (
-    <ControlGroup fill={fill}>
+    <>
       {!filteredItems || filteredItems.length === 0 ? (
         <StringField value={t('NothingToSelect')} read_only disabled name={name} onChange={() => {}} />
       ) : (
         <>
           {hasItemsWithDesc(items) && !forceDropdown ? (
             <>
-              <Tooltip
-                position="top"
-                boundary="viewport"
-                targetProps={{
-                  style: {
-                    width: '100%'
-                  }
-                }}
+              <ReqorePopover
+                placement="top"
+                isReqoreComponent
+                component={ReqoreButton}
                 content={
                   <ReactMarkdown>
-                    {value ? getItemDescription(value) || t('NoDescription') : t('PleaseSelect')}
+                    {value ? getItemDescription(value) || t('No description') : t('Please select')}
                   </ReactMarkdown>
                 }
+                componentProps={
+                  {
+                    flat: true,
+                    rightIcon: 'WindowFill',
+                    onClick: () => setSelectDialogOpen(true),
+                    disabled
+                  } as IReqoreButtonProps
+                }
               >
-                <Button
-                  name={`field-${name}`}
-                  fill={fill}
-                  text={value ? value : placeholder || t('PleaseSelect')}
-                  rightIcon="widget-header"
-                  onClick={() => setSelectDialogOpen(true)}
-                  disabled={disabled}
-                />
-              </Tooltip>
+                {value ? value : placeholder || t('Please select')}
+              </ReqorePopover>
               {isSelectDialogOpen && (
                 <CustomDialog
                   isOpen
-                  icon="list"
+                  blur={5}
+                  flat={false}
+                  icon="ListOrdered"
                   onClose={() => {
                     setSelectDialogOpen(false)
                     setQuery('')
                   }}
-                  title={t('SelectItem')}
-                  style={{
-                    maxHeight: '80vh',
-                    width: '50vw',
-                    minWidth: '500px',
-                    overflow: 'auto',
-                    padding: 0
-                  }}
+                  title={t('Select item to add')}
                 >
-                  <div
-                    className={Classes.DIALOG_BODY}
-                    style={{ display: 'flex', flexFlow: 'column', overflow: 'hidden' }}
-                  >
+                  <div style={{ padding: '10px' }}>
                     <div>
                       <StringField
                         onChange={(_name, value) => setQuery(value)}
@@ -214,36 +201,30 @@ const SelectField: React.FC<ISelectField & any> = ({
                     </div>
                     <div style={{ overflowY: 'auto', overflowX: 'hidden' }}>
                       {filterItems(filteredItems).map((item) => (
-                        <Tooltip
-                          position="top"
-                          boundary="viewport"
-                          targetProps={{
+                        <ReqorePopover
+                          placement="top"
+                          component={StyledDialogSelectItem}
+                          content={<ReactMarkdown>{item.desc}</ReactMarkdown>}
+                          componentProps={{
                             style: {
                               width: '100%'
-                            }
-                          }}
-                          hoverOpenDelay={500}
-                          interactionKind="hover"
-                          content={<ReactMarkdown>{item.desc}</ReactMarkdown>}
-                        >
-                          <StyledDialogSelectItem
-                            className={item.name === value ? 'selected' : ''}
-                            onClick={() => {
+                            },
+                            className: item.name === value ? 'selected' : '',
+                            onClick: () => {
                               handleSelectClick(item)
                               setSelectDialogOpen(false)
                               setQuery('')
-                            }}
-                          >
-                            <h5>
-                              {item.name === value && <Icon icon="small-tick" style={{ color: '#7fba27' }} />}{' '}
-                              {item.name}
-                            </h5>
+                            }
+                          }}
+                        >
+                          <h5>
+                            {item.name === value && <Icon icon="small-tick" style={{ color: '#7fba27' }} />} {item.name}
+                          </h5>
 
-                            <p className={Classes.TEXT_MUTED}>
-                              <ReactMarkdown>{item.desc || t('NoDescription')}</ReactMarkdown>
-                            </p>
-                          </StyledDialogSelectItem>
-                        </Tooltip>
+                          <p className={Classes.TEXT_MUTED}>
+                            <ReactMarkdown>{item.desc || t('NoDescription')}</ReactMarkdown>
+                          </p>
+                        </ReqorePopover>
                       ))}
                     </div>
                   </div>
@@ -251,43 +232,25 @@ const SelectField: React.FC<ISelectField & any> = ({
               )}
             </>
           ) : (
-            <Select
-              items={query === '' ? filteredItems : filterItems(filteredItems)}
-              itemRenderer={(item, data) => (
-                <MenuItem
-                  title={item.desc}
-                  icon={value && item.name === value ? 'tick' : 'blank'}
-                  text={item.name}
-                  onClick={data.handleClick}
-                />
-              )}
-              inputProps={{
-                placeholder: t('Filter'),
-                name: 'field-select-filter',
-                autoFocus: true
-              }}
-              popoverProps={{
-                popoverClassName: 'custom-popover',
-                targetClassName: fill ? 'select-popover' : '',
-                position: 'left'
-              }}
-              className={fill ? Classes.FILL : ''}
-              onItemSelect={(item: any) => handleSelectClick(item)}
-              query={query}
-              onQueryChange={(newQuery: string) => setQuery(newQuery)}
-              disabled={disabled}
-            >
-              <Button
-                name={`field-${name}`}
-                fill={fill}
-                text={value ? value : placeholder || t('PleaseSelect')}
-                rightIcon={'caret-down'}
-              />
-            </Select>
+            <ReqoreDropdown
+              items={items.map((item) => ({
+                label: item.name,
+                onClick: () => handleSelectClick(item)
+              }))}
+              label={value ? value : placeholder || t('Please select')}
+              closeOnOutsideClick
+              filterable
+              componentProps={
+                {
+                  disabled,
+                  flat: true
+                } as IReqoreButtonProps
+              }
+            />
           )}
         </>
       )}
-    </ControlGroup>
+    </>
   )
 }
 

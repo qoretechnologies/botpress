@@ -1,9 +1,10 @@
-import { Button, ButtonGroup, Callout, Classes, Spinner } from '@blueprintjs/core'
+import { Button, Callout, Classes } from '@blueprintjs/core'
+import { ReqoreButton, ReqoreControlGroup } from '@qoretechnologies/reqore'
 import { cloneDeep, omit } from 'lodash'
 import map from 'lodash/map'
 import nth from 'lodash/nth'
 import size from 'lodash/size'
-import React, { FC, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useDebounce } from 'react-use'
 import styled, { css } from 'styled-components'
 import CustomDialog from '../components/CustomDialog'
@@ -134,7 +135,7 @@ export const configItemFactory = {
   type: 'factory'
 }
 
-const MapperProvider: FC<IProviderProps> = ({
+const MapperProvider = ({
   provider,
   setProvider,
   nodes,
@@ -156,7 +157,8 @@ const MapperProvider: FC<IProviderProps> = ({
   isConfigItem,
   options,
   requiresRequest,
-  optionsChanged
+  optionsChanged,
+  onReset
 }: any) => {
   const [wildcardDiagram, setWildcardDiagram] = useState(null)
   const [optionString, setOptionString] = useState('')
@@ -476,7 +478,7 @@ const MapperProvider: FC<IProviderProps> = ({
       <StyledWrapper compact={compact} hasTitle={!!title} style={style}>
         {!compact && <StyledHeader>{title}</StyledHeader>}
         {compact && title && <span>{title}: </span>}{' '}
-        <ButtonGroup>
+        <ReqoreControlGroup stack fill>
           <SelectField
             name={`provider${type ? `-${type}` : ''}`}
             disabled={isLoading}
@@ -488,7 +490,7 @@ const MapperProvider: FC<IProviderProps> = ({
             value={provider}
           />
           {nodes.map((child, index) => (
-            <ButtonGroup>
+            <>
               <SelectField
                 key={`${title}-${index}`}
                 name={`provider-${type ? `${type}-` : ''}${index}`}
@@ -513,8 +515,10 @@ const MapperProvider: FC<IProviderProps> = ({
                 value={child.value}
               />
               {index === 0 && optionsChanged ? (
-                <Button
-                  icon="refresh"
+                <ReqoreButton
+                  flat
+                  disabled={isLoading}
+                  icon="RefreshLine"
                   intent="success"
                   onClick={() => {
                     // Get the child data
@@ -535,66 +539,69 @@ const MapperProvider: FC<IProviderProps> = ({
                 >
                   {' '}
                   Apply options{' '}
-                </Button>
+                </ReqoreButton>
               ) : null}
-            </ButtonGroup>
+            </>
           ))}
-          {isLoading && <Spinner size={15} />}
+          {isLoading && <ReqoreButton flat intent="pending" icon="Loader3Line" />}
           {nodes.length > 0 && (
-            <Button
-              intent="danger"
-              name={`provider-${type ? `${type}-` : ''}back`}
-              icon="step-backward"
-              className={Classes.FIXED}
-              onClick={() => {
-                setChildren((cur) => {
-                  const result = [...cur]
+            <>
+              <ReqoreButton
+                flat
+                intent="warning"
+                icon="DeleteBack2Fill"
+                className={Classes.FIXED}
+                onClick={() => {
+                  setChildren((cur) => {
+                    const result = [...cur]
 
-                  result.pop()
+                    result.pop()
 
-                  const lastChild = nth(result, -2)
+                    const lastChild = nth(result, -2)
 
-                  if (lastChild) {
-                    const index = size(result) - 2
-                    const { value, values } = lastChild
-                    const { url, suffix } = values.find((val) => val.name === value)
+                    if (lastChild) {
+                      const index = size(result) - 2
+                      const { value, values } = lastChild
+                      const { url, suffix } = values.find((val) => val.name === value)
 
-                    // If the value is a wildcard present a dialog that the user has to fill
-                    if (value === '*') {
-                      setWildcardDiagram({
-                        index,
-                        isOpen: true,
-                        url,
-                        suffix
-                      })
-                    } else {
-                      // Change the child
-                      handleChildFieldChange(value, url, index, suffix)
+                      // If the value is a wildcard present a dialog that the user has to fill
+                      if (value === '*') {
+                        setWildcardDiagram({
+                          index,
+                          isOpen: true,
+                          url,
+                          suffix
+                        })
+                      } else {
+                        // Change the child
+                        handleChildFieldChange(value, url, index, suffix)
+                      }
                     }
-                  }
 
-                  // If there are no children then we need to reset the provider
-                  if (size(result) === 0) {
-                    handleProviderChange(provider)
-                  }
+                    // If there are no children then we need to reset the provider
+                    if (size(result) === 0) {
+                      handleProviderChange(provider)
+                    }
 
-                  return result
-                })
-              }}
-            />
+                    return result
+                  })
+                }}
+              />
+              <ReqoreButton intent="danger" icon="DeleteBin2Fill" onClick={onReset} fixed flat />
+            </>
           )}
           {record && (
-            <Button
+            <ReqoreButton
+              flat
               intent="success"
-              name={`provider-${type ? `${type}-` : ''}submit`}
-              icon="small-tick"
+              icon="CheckLine"
               onClick={() => {
                 setFields(record)
                 hide()
               }}
             />
           )}
-        </ButtonGroup>
+        </ReqoreControlGroup>
       </StyledWrapper>
     </>
   )

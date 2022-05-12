@@ -1,3 +1,4 @@
+import { ReqoreUIProvider } from '@qoretechnologies/reqore'
 import React, { useEffect, useState } from 'react'
 import style from '../style.scss'
 import DataProvider, { IProviderType } from './fields/dataProvider'
@@ -20,8 +21,10 @@ export const CallQorusAPI = ({ onValidChanged, onDataChanged, initialData }) => 
   }, [provider])
 
   return (
-    <div className={style.modalContent}>
-      <DataProvider name="test" value={provider} onChange={(n, v) => setProvider(v)} requiresRequest />
+    <div className={style.modalContent} style={{ backgroundColor: '#ffffff', minHeight: '60vh' }}>
+      <ReqoreUIProvider theme={{ main: '#ffffff' }}>
+        <DataProvider name="test" value={provider} onChange={(n, v) => setProvider(v)} requiresRequest />
+      </ReqoreUIProvider>
     </div>
   )
 }

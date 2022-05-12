@@ -1,4 +1,4 @@
-import { Callout, Classes, Icon } from '@blueprintjs/core'
+import { ReqoreMessage } from '@qoretechnologies/reqore'
 import { cloneDeep, forEach } from 'lodash'
 import isArray from 'lodash/isArray'
 import map from 'lodash/map'
@@ -191,10 +191,10 @@ const Options = ({ name, value, onChange, url, customUrl, placeholder, ...rest }
 
   if (error) {
     return (
-      <Callout intent="danger">
+      <ReqoreMessage intent="danger">
         <p style={{ fontWeight: 500 }}>{t('ErrorLoadingOptions')}</p>
         {t(error)}
-      </Callout>
+      </ReqoreMessage>
     )
   }
 
@@ -203,7 +203,11 @@ const Options = ({ name, value, onChange, url, customUrl, placeholder, ...rest }
   }
 
   if (!size(options)) {
-    return <Callout intent="warning">{t('NoOptionsAvailable')}</Callout>
+    return (
+      <ReqoreMessage intent="warning" flat inverted>
+        {t('No options available for this factory')}
+      </ReqoreMessage>
+    )
   }
 
   const addSelectedOption = (optionName: string) => {
@@ -293,9 +297,9 @@ const Options = ({ name, value, onChange, url, customUrl, placeholder, ...rest }
         )}
       </div>
       {size(fixedValue) === 0 && (
-        <p className={Classes.TEXT_MUTED}>
-          <Icon icon="info-sign" /> {t('NoOptionsSelected')}
-        </p>
+        <ReqoreMessage intent="info" inverted flat>
+          {t('No options selected. Please add options from the list.')}
+        </ReqoreMessage>
       )}
       <Spacer size={10} />
       {size(filteredOptions) >= 1 && (
@@ -306,7 +310,7 @@ const Options = ({ name, value, onChange, url, customUrl, placeholder, ...rest }
             desc: options[option].desc
           }))}
           onChange={(_name, value) => addSelectedOption(value)}
-          placeholder={`${t(placeholder || 'AddNewOption')} (${size(filteredOptions)})`}
+          placeholder={`${t(placeholder || 'Add new option')} (${size(filteredOptions)})`}
         />
       )}
     </>

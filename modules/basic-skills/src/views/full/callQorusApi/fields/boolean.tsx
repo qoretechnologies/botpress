@@ -1,5 +1,5 @@
-import { Switch } from '@blueprintjs/core'
-import React, { FormEvent } from 'react'
+import { ReqoreCheckbox } from '@qoretechnologies/reqore'
+import React from 'react'
 import useMount from 'react-use/lib/useMount'
 import { isUndefined } from 'util'
 import { getValueOrDefaultValue } from '../validator'
@@ -10,7 +10,7 @@ const BooleanField = ({ name, onChange, value, default_value, disabled }: any) =
     onChange(name, getValueOrDefaultValue(value, default_value || false, false))
   })
 
-  const handleEnabledChange: (event: FormEvent<HTMLInputElement>) => void = () => {
+  const handleEnabledChange = () => {
     // Run the onchange
     if (onChange) {
       onChange(name, !value)
@@ -22,12 +22,11 @@ const BooleanField = ({ name, onChange, value, default_value, disabled }: any) =
   }
 
   return (
-    <Switch
+    <ReqoreCheckbox
       disabled={disabled}
       checked={value || false}
-      large
-      onChange={handleEnabledChange}
-      name={`field-${name}`}
+      asSwitch
+      onClick={handleEnabledChange}
       className={`field-switch-${name}`}
     />
   )

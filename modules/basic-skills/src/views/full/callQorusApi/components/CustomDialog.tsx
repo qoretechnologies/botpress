@@ -1,4 +1,6 @@
-import { Dialog, IDialogProps } from '@blueprintjs/core'
+import { IDialogProps } from '@blueprintjs/core'
+import { ReqoreModal, ReqoreModalContent } from '@qoretechnologies/reqore'
+import { IReqoreModalProps } from '@qoretechnologies/reqore/dist/components/Modal'
 import React from 'react'
 
 export interface ICustomDialogProps extends IDialogProps {
@@ -6,11 +8,11 @@ export interface ICustomDialogProps extends IDialogProps {
   noBottomPad?: boolean
 }
 
-const CustomDialog: React.FC<ICustomDialogProps> = ({ children, noBottomPad, ...rest }) => {
+const CustomDialog: React.FC<IReqoreModalProps> = ({ children, ...rest }) => {
   return (
-    <Dialog {...rest} canEscapeKeyClose={false}>
-      {children}
-    </Dialog>
+    <ReqoreModal {...rest}>
+      <ReqoreModalContent>{children}</ReqoreModalContent>
+    </ReqoreModal>
   )
 }
 

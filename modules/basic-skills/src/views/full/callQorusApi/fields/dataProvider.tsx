@@ -1,13 +1,14 @@
-import { Button, Classes, Tag } from '@blueprintjs/core'
+import { Tag } from '@blueprintjs/core'
+import { ReqoreMessage, ReqorePanel } from '@qoretechnologies/reqore'
 import { cloneDeep, isEqual, map, reduce } from 'lodash'
 import size from 'lodash/size'
 import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useDebounce } from 'react-use'
 import styled from 'styled-components'
+import Spacer from '../components/Spacer'
 import SubField from '../components/SubField'
 import { ApiCallArgs } from './apiCallArgs'
-import BooleanField from './boolean'
 import Provider, { providers } from './provider'
 import Options, { IOptions } from './systemOptions'
 
@@ -174,7 +175,10 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
             ]
           },
           ...(optionProvider.path
-            ? optionProvider?.path.split('/').map((item) => ({ value: item, values: [{ name: item }] }))
+            ? optionProvider?.path
+                .split('/')
+                .map((item) => ({ value: item, values: [{ name: item }] }))
+                .filter((predicate) => predicate && predicate.value !== '')
             : [])
         ]
       : []
@@ -264,7 +268,7 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
 
   return (
     <div>
-      <SubField title={!minimal && t('SelectDataProvider')}>
+      <ReqorePanel collapsible padded label="Select data provider" rounded>
         <Provider
           isConfigItem={isConfigItem}
           nodes={nodes}
@@ -286,62 +290,72 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
           style={{
             display: inline ? 'inline-block' : 'block'
           }}
+          onReset={reset}
         />
-      </SubField>
-      {size(nodes) ? <Button intent="danger" icon="cross" onClick={reset} className={Classes.FIXED} /> : null}
-      {optionProvider?.desc && (
-        <SubField title={!minimal && t('Description')}>
-          <ReactMarkdown>{optionProvider.desc}</ReactMarkdown>
-        </SubField>
-      )}
+        {optionProvider?.desc && (
+          <ReqoreMessage intent="info" flat inverted size="small">
+            <div>
+              <ReactMarkdown>{optionProvider.desc}</ReactMarkdown>
+            </div>
+          </ReqoreMessage>
+        )}
+      </ReqorePanel>
+      <Spacer size={15} />
       {provider === 'factory' && optionProvider ? (
-        <SubField title={t('FactoryOptions')}>
-          <Options
-            onChange={(nm, val) => {
-              setOptionProvider((cur) => ({
-                ...cur,
-                options: val,
-                optionsChanged: !isEqual(optionProvider.options, val)
-              }))
-            }}
-            name="options"
-            value={optionProvider.options}
-            customUrl={`${getUrlFromProvider(optionProvider, true)}`}
-          />
-        </SubField>
+        <>
+          <ReqorePanel collapsible label="Factory options" padded rounded>
+            <Options
+              onChange={(nm, val) => {
+                setOptionProvider((cur) => ({
+                  ...cur,
+                  options: val,
+                  optionsChanged: !isEqual(optionProvider.options, val)
+                }))
+              }}
+              name="options"
+              value={optionProvider.options}
+              customUrl={`${getUrlFromProvider(optionProvider, true)}`}
+            />
+          </ReqorePanel>
+          <Spacer size={15} />
+        </>
       ) : null}
       {/* This means that we are working with an API Call provider */}
       {requiresRequest && optionProvider?.supports_request ? (
         <>
-          <SubField title={t('AllowAPIArguments')} desc={t('AllowAPIArgumentsDesc')}>
-            <BooleanField
-              name="useArgs"
-              value={optionProvider.use_args || false}
-              onChange={(_nm, val) => {
+          <ReqorePanel
+            label="Allow API arguments"
+            actions={[
+              {
+                icon: 'CheckLine',
+                intent: optionProvider?.use_args ? 'success' : undefined,
+                onClick: () => {
+                  setOptionProvider((cur) => ({
+                    ...cur,
+                    use_args: !optionProvider.use_args
+                  }))
+                }
+              }
+            ]}
+            isCollapsed={!optionProvider.use_args}
+            unMountContentOnCollapse
+            rounded
+            padded
+          >
+            <ApiCallArgs
+              value={optionProvider?.args?.value}
+              url={`${getUrlFromProvider(optionProvider)}`}
+              onChange={(_nm, value, type) => {
                 setOptionProvider((cur) => ({
                   ...cur,
-                  use_args: val
+                  args: {
+                    type,
+                    value
+                  }
                 }))
               }}
             />
-          </SubField>
-          {optionProvider?.use_args && (
-            <SubField title={t('RequestArguments')}>
-              <ApiCallArgs
-                value={optionProvider?.args?.value}
-                url={`${getUrlFromProvider(optionProvider)}`}
-                onChange={(_nm, value, type) => {
-                  setOptionProvider((cur) => ({
-                    ...cur,
-                    args: {
-                      type,
-                      value
-                    }
-                  }))
-                }}
-              />
-            </SubField>
-          )}
+          </ReqorePanel>
         </>
       ) : null}
     </div>

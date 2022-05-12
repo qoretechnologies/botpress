@@ -1,4 +1,5 @@
-import { Classes, TextArea } from '@blueprintjs/core'
+import { Classes } from '@blueprintjs/core'
+import { ReqoreTextarea } from '@qoretechnologies/reqore'
 import React, { ChangeEvent, FunctionComponent } from 'react'
 import useMount from 'react-use/lib/useMount'
 export interface ILongStringField {
@@ -39,16 +40,17 @@ const LongStringField: FunctionComponent<ILongStringField & any> = ({
     onChange(name, event.target.value)
   }
 
+  console.log('LONG STRING VALUE', value || default_value)
+
   return (
-    <TextArea
-      name={`field-${name}`}
+    <ReqoreTextarea
       style={{
         width: '100%',
         resize: 'none',
         whiteSpace: noWrap ? 'nowrap' : undefined
       }}
       placeholder={placeholder}
-      rows={getLineCount(value || default_value || '') + 1}
+      scaleWithContent
       className={fill && Classes.FILL}
       value={!value ? default_value || '' : value}
       onChange={handleInputChange}

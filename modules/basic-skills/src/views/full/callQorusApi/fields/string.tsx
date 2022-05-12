@@ -1,4 +1,6 @@
-import { Button, ButtonGroup, Classes, InputGroup } from '@blueprintjs/core'
+import { Classes } from '@blueprintjs/core'
+import { ReqoreInput } from '@qoretechnologies/reqore'
+import { IReqoreInputProps } from '@qoretechnologies/reqore/dist/components/Input'
 import React, { ChangeEvent } from 'react'
 import useMount from 'react-use/lib/useMount'
 import { isNull } from 'util'
@@ -11,7 +13,11 @@ export interface IStringField {
   canBeNull?: boolean
   sensitive?: boolean
   autoFocus?: boolean
-  onChange?: Function
+  onChange?: (name: string, value: string) => void
+  name?: string
+  value?: string
+  default_value?: string
+  disabled?: boolean
 }
 
 const StringField = ({
@@ -26,7 +32,7 @@ const StringField = ({
   canBeNull,
   sensitive,
   autoFocus
-}: IStringField & any) => {
+}: IStringField & IReqoreInputProps) => {
   // Fetch data on mount
   useMount(() => {
     // Populate default value
@@ -44,8 +50,7 @@ const StringField = ({
   }
 
   return (
-    <InputGroup
-      name={`field-${name}`}
+    <ReqoreInput
       placeholder={placeholder}
       disabled={disabled}
       readOnly={read_only}
@@ -56,16 +61,7 @@ const StringField = ({
       onChange={handleInputChange}
       type={sensitive ? 'password' : 'text'}
       autoFocus={autoFocus}
-      rightElement={
-        value &&
-        value !== '' &&
-        !read_only &&
-        !disabled && (
-          <ButtonGroup minimal>
-            <Button name={`reset-field-${name}`} onClick={handleResetClick} icon={'cross'} />
-          </ButtonGroup>
-        )
-      }
+      onClearClick={handleResetClick}
     />
   )
 }

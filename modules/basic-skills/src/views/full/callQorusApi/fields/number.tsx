@@ -1,4 +1,5 @@
-import { Button, ButtonGroup, Classes, InputGroup } from '@blueprintjs/core'
+import { Classes } from '@blueprintjs/core'
+import { ReqoreInput } from '@qoretechnologies/reqore'
 import React, { ChangeEvent, FunctionComponent } from 'react'
 
 export interface INumberField {
@@ -20,20 +21,13 @@ const NumberField: FunctionComponent<INumberField & any> = ({ name, onChange, va
   }
 
   return (
-    <InputGroup
-      name={`field-${name}`}
+    <ReqoreInput
       className={fill && Classes.FILL}
       value={value ?? default_value ?? ''}
-      //onChange={handleInputChange}
-      type="number"
+      onChange={handleInputChange}
       step={type === 'int' || type === 'number' ? 1 : 0.1}
-      rightElement={
-        (value && value !== '') || value === 0 ? (
-          <ButtonGroup minimal>
-            <Button onClick={handleResetClick} icon={'cross'} />
-          </ButtonGroup>
-        ) : null
-      }
+      onClearClick={handleResetClick}
+      type="number"
     />
   )
 }

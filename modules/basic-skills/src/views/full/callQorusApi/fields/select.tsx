@@ -235,6 +235,8 @@ const SelectField: React.FC<ISelectField & any> = ({
             <ReqoreDropdown
               items={items.map((item) => ({
                 label: item.name,
+                selected: item.name === value,
+                intent: item.name === value ? 'info' : undefined,
                 onClick: () => handleSelectClick(item)
               }))}
               label={value ? value : placeholder || t('Please select')}

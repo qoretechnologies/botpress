@@ -67,7 +67,11 @@ const callApi = async (url, method, body, memory, variable, headers) => {
   delete renderedBody.supports_request
   delete renderedBody.use_args
 
+// this just slaps in the context object
+renderedBody.context = context
+
   try {
+    //console.log('SENDING DATA', renderedBody)
     const response = await axios({
       method,
       url,

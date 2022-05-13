@@ -90,7 +90,7 @@ const callApi = async (url, method, body, memory, variable, headers) => {
 }
 
 return callApi(
-  'http://hq.qoretechnologies.com:8091/api/latest/dataprovider/callApi',
+  'http://hq.qoretechnologies.com:8091/api/latest/dataprovider/callApiFromUi',
   'POST',
   args.provider,
   'temp',

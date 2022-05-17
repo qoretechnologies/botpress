@@ -2,7 +2,9 @@ export const fetchData = async (
   url: string,
   method: 'GET' | 'POST' | 'PUT' = 'GET'
 ): Promise<{ data?: any; error?: string }> => {
-  const realUrl = `http://hq.qoretechnologies.com:8091/api/latest/${url}`
+  const realUrl = `${window.location.protocol}://hq.qoretechnologies.com:${
+    window.location.protocol === 'https' ? '8092' : '8091'
+  }/api/latest/${url}`
 
   try {
     const res = await fetch(realUrl, {

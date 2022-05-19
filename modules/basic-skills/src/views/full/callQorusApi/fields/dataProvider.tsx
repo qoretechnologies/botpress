@@ -1,41 +1,45 @@
-import { Tag } from '@blueprintjs/core'
-import { ReqoreMessage, ReqorePanel } from '@qoretechnologies/reqore'
-import { cloneDeep, isEqual, map, reduce } from 'lodash'
-import size from 'lodash/size'
-import React, { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
-import { useDebounce } from 'react-use'
-import styled from 'styled-components'
-import Spacer from '../components/Spacer'
-import SubField from '../components/SubField'
-import { ApiCallArgs } from './apiCallArgs'
-import Provider, { providers } from './provider'
-import Options, { IOptions } from './systemOptions'
+import { Tag } from '@blueprintjs/core';
+import { ReqoreMessage, ReqorePanel } from '@qoretechnologies/reqore';
+import { cloneDeep, isEqual, map, reduce } from 'lodash';
+import size from 'lodash/size';
+import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { useDebounce } from 'react-use';
+import styled from 'styled-components';
+import Spacer from '../components/Spacer';
+import SubField from '../components/SubField';
+import { ApiCallArgs } from './apiCallArgs';
+import Provider, { providers } from './provider';
+import Options, { IOptions } from './systemOptions';
 
 export interface IConnectorFieldProps {
-  title?: string
-  onChange?: (name: string, data: IProviderType | string) => void
-  name: string
-  value: IProviderType | string
-  inline?: boolean
-  providerType?: 'inputs' | 'outputs' | 'event' | 'input-output' | 'condition'
-  requiresRequest?: boolean
-  minimal?: boolean
-  isConfigItem?: boolean
+  title?: string;
+  onChange?: (name: string, data: IProviderType | string) => void;
+  name: string;
+  value: IProviderType | string;
+  inline?: boolean;
+  providerType?: 'inputs' | 'outputs' | 'event' | 'input-output' | 'condition';
+  requiresRequest?: boolean;
+  minimal?: boolean;
+  isConfigItem?: boolean;
+  isRecordSearch?: boolean;
 }
 
 export interface IProviderType {
-  type: string
-  name: string
-  path?: string
-  options?: IOptions
-  hasApiContext?: boolean
-  optionsChanged?: boolean
-  desc?: string
-  use_args?: boolean
-  args?: any
-  supports_request?: boolean
-  is_api_call?: boolean
+  type: string;
+  name: string;
+  path?: string;
+  options?: IOptions;
+  hasApiContext?: boolean;
+  optionsChanged?: boolean;
+  desc?: string;
+  use_args?: boolean;
+  args?: any;
+  supports_request?: boolean;
+  supports_read?: boolean;
+  is_api_call?: boolean;
+  search_args?: IOptions;
+  search_options?: IOptions;
 }
 
 const StyledProviderUrl = styled.div`
@@ -45,85 +49,93 @@ const StyledProviderUrl = styled.div`
   span {
     font-weight: 500;
   }
-`
+`;
 
-export const getUrlFromProvider: (val: IProviderType | string, withOptions?: boolean) => string = (
-  val,
-  withOptions
-) => {
+export const getUrlFromProvider: (
+  val: IProviderType | string,
+  withOptions?: boolean,
+  isRecordSearch?: boolean
+) => string = (val, withOptions, isRecordSearch) => {
   // If the val is a string, return it
   if (typeof val === 'string') {
-    return val
+    return val;
   }
-  const { type, name, path = '', options, is_api_call, hasApiContext } = val
-  let optionString
+  const { type, name, path = '', options, is_api_call, hasApiContext } = val;
+  let optionString;
 
   if (size(options)) {
     // Build the option string for URL
     optionString = `provider_yaml_options={${map(
       options,
       (value, key) => `${key}=${btoa(value?.value || value || '')}`
-    ).join(',')}}`
+    ).join(',')}}`;
   }
   // Get the rules for the given provider
-  const { url, suffix, recordSuffix, suffixRequiresOptions } = providers[type]
+  const { url, suffix, recordSuffix, suffixRequiresOptions } = providers[type];
 
   if (withOptions) {
-    return `${url}/${name}/${type === 'factory' ? 'provider_info/' : ''}constructor_options?context=ui${
-      hasApiContext ? '&context=api' : ''
-    }`
+    return `${url}/${name}/${
+      type === 'factory' ? 'provider_info/' : ''
+    }constructor_options?context=ui${hasApiContext ? '&context=api' : ''}`;
   }
 
   // Check if the path ends in /request or /response
-  const endsInSubtype = path.endsWith('/request') || path.endsWith('/response')
+  const endsInSubtype = path.endsWith('/request') || path.endsWith('/response');
 
   // Build the suffix
-  const realPath = `${suffix}${path}${endsInSubtype || is_api_call ? '' : recordSuffix || ''}${
-    withOptions ? '/constructor_options' : ''
-  }`
+  const realPath = `${suffix}${path}${
+    endsInSubtype || is_api_call || isRecordSearch ? '' : recordSuffix || ''
+  }${withOptions ? '/constructor_options' : ''}`;
 
   const suffixString = suffixRequiresOptions
     ? optionString && optionString !== ''
       ? `${realPath}?${optionString}`
       : `${withOptions ? '/constructor_options' : `${realPath}`}`
-    : realPath
+    : realPath;
 
   // Build the URL based on the provider type
-  return `${url}/${name}${suffixString}${type === 'type' && endsInSubtype ? '?action=type' : ''}`
-}
+  return `${url}/${name}${suffixString}${
+    type === 'type' && endsInSubtype ? '?action=type' : ''
+  }`;
+};
 
-export const maybeBuildOptionProvider = (provider: IProviderType | string): IProviderType | null => {
+export const maybeBuildOptionProvider = (
+  provider: IProviderType | string
+): IProviderType | null => {
   if (!provider) {
-    return null
+    return null;
   }
 
   // If the provider is an object, return it
   if (typeof provider === 'object') {
-    return provider
+    return provider;
   }
   // Check if the provider is a factory
   if (provider.startsWith('factory')) {
     // Get everything between the < and >
     //const factory = provider.substring(provider.indexOf('<') + 1, provider.indexOf('>'));
     // Get the factory name
-    const [factoryType, nameWithOptions]: string[] = provider.split('/')
+    const [factoryType, nameWithOptions]: string[] = provider.split('/');
     // Get everything between the first / and { bracket
-    const [factoryName] = nameWithOptions.split('{')
+    const [factoryName] = nameWithOptions.split('{');
     // Get everything in the provider between first { and last }, which are the options
-    const options = nameWithOptions.substring(nameWithOptions.indexOf('{') + 1, nameWithOptions.lastIndexOf('}'))
+    const options = nameWithOptions.substring(
+      nameWithOptions.indexOf('{') + 1,
+      nameWithOptions.lastIndexOf('}')
+    );
     // Split the options by comma
-    const optionsArray = options.split(',')
-    let optionsObject = {}
+    const optionsArray = options.split(',');
+    let optionsObject = {};
     if (size(optionsArray)) {
       // Map through all the options and split each by =, which is the key and value
       optionsObject = reduce(
         optionsArray,
         (newOptions, option) => {
-          const [key, value] = option.split('=')
-          return { ...newOptions, [key]: value }
+          const [key, value] = option.split('=');
+          return { ...newOptions, [key]: value };
         },
         {}
-      )
+      );
     }
     // Return the new provider
     return {
@@ -133,21 +145,21 @@ export const maybeBuildOptionProvider = (provider: IProviderType | string): IPro
       path: provider.substring(provider.lastIndexOf('}/') + 2),
       options: optionsObject,
       // Add the optionsChanged key if the provider includes the "?options_changed" string
-      optionsChanged: (provider as string).includes('?options_changed')
-    } as IProviderType
+      optionsChanged: (provider as string).includes('?options_changed'),
+    } as IProviderType;
   }
   // split the provider by /
-  const [type, name, ...path] = provider.split('/')
-  console.log(type, name, path)
+  const [type, name, ...path] = provider.split('/');
+  console.log(type, name, path);
   // Return it
   return {
     type,
     name,
-    path: path.join('/')
-  } as IProviderType
-}
+    path: path.join('/'),
+  } as IProviderType;
+};
 
-export const t = (str) => str
+export const t = (str) => str;
 
 const ConnectorField: React.FC<IConnectorFieldProps> = ({
   title,
@@ -158,9 +170,12 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
   providerType,
   minimal,
   isConfigItem,
-  requiresRequest
+  requiresRequest,
+  isRecordSearch,
 }) => {
-  const [optionProvider, setOptionProvider] = useState<IProviderType | null>(maybeBuildOptionProvider(value))
+  const [optionProvider, setOptionProvider] = useState<IProviderType | null>(
+    maybeBuildOptionProvider(value)
+  );
   const [nodes, setChildren] = useState(
     optionProvider
       ? [
@@ -170,105 +185,93 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
               {
                 name: optionProvider.name,
                 url: providers[optionProvider.type].url,
-                suffix: providers[optionProvider.type].suffix
-              }
-            ]
+                suffix: providers[optionProvider.type].suffix,
+              },
+            ],
           },
           ...(optionProvider.path
             ? optionProvider?.path
                 .split('/')
                 .map((item) => ({ value: item, values: [{ name: item }] }))
                 .filter((predicate) => predicate && predicate.value !== '')
-            : [])
+            : []),
         ]
       : []
-  )
-  const [provider, setProvider] = useState(optionProvider?.type)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
+  );
+  const [provider, setProvider] = useState(optionProvider?.type);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const clear = () => {
-    setIsEditing(false)
-    setOptionProvider(null)
-  }
+    setIsEditing(false);
+    setOptionProvider(null);
+  };
 
   const reset = () => {
-    setChildren([])
-    setProvider(null)
-    setOptionProvider(null)
-    setIsLoading(false)
-    onChange?.(name, undefined)
-  }
+    setChildren([]);
+    setProvider(null);
+    setOptionProvider(null);
+    setIsLoading(false);
+    onChange?.(name, undefined);
+  };
 
   useDebounce(
     () => {
       if (!isEditing) {
         if (!optionProvider) {
-          onChange?.(name, undefined)
-          return
+          onChange?.(name, undefined);
+          return;
         }
 
-        const val = { ...optionProvider }
+        const val = { ...optionProvider };
 
         if (val.type !== 'factory') {
-          delete val.optionsChanged
-          delete val.options
+          delete val.optionsChanged;
+          delete val.options;
         }
 
         if (isConfigItem) {
           // Add type from optionProvider and get value from all nodes and join them by /
-          const type = val.type
-          const newNodes = cloneDeep(nodes)
+          const type = val.type;
+          const newNodes = cloneDeep(nodes);
 
           if (type === 'factory') {
             let options = reduce(
               val.options,
               (newOptions, optionData, optionName) => {
-                return `${newOptions}${optionName}=${optionData.value},`
+                return `${newOptions}${optionName}=${optionData.value},`;
               },
               ''
-            )
+            );
             // Remove the last comma from options
-            options = options.substring(0, options.length - 1)
+            options = options.substring(0, options.length - 1);
 
             if (newNodes[0]) {
-              newNodes[0].value = `${newNodes[0].value}{${options}}`
+              newNodes[0].value = `${newNodes[0].value}{${options}}`;
             }
 
-            const value = newNodes.map((node) => node.value).join('/')
+            const value = newNodes.map((node) => node.value).join('/');
 
-            onChange?.(name, `${type}/${value}${val.optionsChanged ? `?options_changed` : ''}`)
+            onChange?.(
+              name,
+              `${type}/${value}${val.optionsChanged ? `?options_changed` : ''}`
+            );
           } else {
-            const value = nodes.map((node) => node.value).join('/')
-            onChange?.(name, `${type}/${value}`)
+            const value = nodes.map((node) => node.value).join('/');
+            onChange?.(name, `${type}/${value}`);
           }
         } else {
-          onChange?.(name, val)
+          onChange?.(name, val);
         }
       }
     },
     30,
     [JSON.stringify(optionProvider), isEditing]
-  )
-
-  if (isEditing && value && optionProvider?.type !== 'factory') {
-    return (
-      <div>
-        <SubField title={!minimal && t('CurrentDataProvider')}>
-          <StyledProviderUrl>
-            {title && <span>{title}:</span>}{' '}
-            <Tag minimal large onRemove={clear}>
-              {getUrlFromProvider(value)}{' '}
-            </Tag>
-          </StyledProviderUrl>
-        </SubField>
-      </div>
-    )
-  }
+  );
 
   return (
     <div>
-      <ReqorePanel collapsible padded label="Select data provider" rounded>
+      <ReqorePanel collapsible padded label='Select data provider' rounded>
         <Provider
           isConfigItem={isConfigItem}
           nodes={nodes}
@@ -276,7 +279,7 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
           provider={provider}
           setProvider={setProvider}
           setOptionProvider={(data) => {
-            setOptionProvider(data)
+            setOptionProvider(data);
           }}
           isLoading={isLoading}
           setIsLoading={setIsLoading}
@@ -288,12 +291,12 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
           compact
           requiresRequest={requiresRequest}
           style={{
-            display: inline ? 'inline-block' : 'block'
+            display: inline ? 'inline-block' : 'block',
           }}
           onReset={reset}
         />
         {optionProvider?.desc && (
-          <ReqoreMessage intent="info" flat inverted size="small">
+          <ReqoreMessage intent='info' flat inverted size='small'>
             <div>
               <ReactMarkdown>{optionProvider.desc}</ReactMarkdown>
             </div>
@@ -303,16 +306,16 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
       <Spacer size={15} />
       {provider === 'factory' && optionProvider ? (
         <>
-          <ReqorePanel collapsible label="Factory options" padded rounded>
+          <ReqorePanel collapsible label='Factory options' padded rounded>
             <Options
               onChange={(nm, val) => {
                 setOptionProvider((cur) => ({
                   ...cur,
                   options: val,
-                  optionsChanged: !isEqual(optionProvider.options, val)
-                }))
+                  optionsChanged: !isEqual(optionProvider.options, val),
+                }));
               }}
-              name="options"
+              name='options'
               value={optionProvider.options}
               customUrl={`${getUrlFromProvider(optionProvider, true)}`}
             />
@@ -324,7 +327,7 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
       {requiresRequest && optionProvider?.supports_request ? (
         <>
           <ReqorePanel
-            label="Allow API arguments"
+            label='Allow API arguments'
             actions={[
               {
                 icon: 'CheckLine',
@@ -332,10 +335,10 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
                 onClick: () => {
                   setOptionProvider((cur) => ({
                     ...cur,
-                    use_args: !optionProvider.use_args
-                  }))
-                }
-              }
+                    use_args: !optionProvider.use_args,
+                  }));
+                },
+              },
             ]}
             isCollapsed={!optionProvider.use_args}
             unMountContentOnCollapse
@@ -350,16 +353,58 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
                   ...cur,
                   args: {
                     type,
-                    value
-                  }
-                }))
+                    value,
+                  },
+                }));
               }}
             />
           </ReqorePanel>
         </>
       ) : null}
-    </div>
-  )
-}
+      {/* This means that we are working with a record search */}
+      {isRecordSearch && optionProvider?.supports_read ? (
+        <>
+          <SubField title={t('Search arguments')}>
+            <SearchArgs
+              url={getUrlFromProvider(optionProvider, false, true)}
+              value={optionProvider?.search_args}
+              onChange={(nm, val) => {
+                setOptionProvider((cur: IProviderType | null) => {
+                  const result: IProviderType = {
+                    ...cur,
+                    search_args: val,
+                  } as IProviderType;
 
-export default ConnectorField
+                  return result;
+                });
+              }}
+            />
+          </SubField>
+          <SubField title={t('Search options')}>
+            <Options
+              onChange={(nm, val) => {
+                setOptionProvider((cur: IProviderType | null) => {
+                  const result: IProviderType = {
+                    ...cur,
+                    search_options: val,
+                  } as IProviderType;
+
+                  return result;
+                });
+              }}
+              name='search_options'
+              value={optionProvider.search_options}
+              customUrl={`${getUrlFromProvider(
+                optionProvider,
+                false,
+                true
+              )}/search_options`}
+            />
+          </SubField>
+        </>
+      ) : null}
+    </div>
+  );
+};
+
+export default ConnectorField;

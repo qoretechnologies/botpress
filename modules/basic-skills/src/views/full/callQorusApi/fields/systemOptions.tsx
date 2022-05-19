@@ -1,21 +1,22 @@
-import { ReqoreMessage } from '@qoretechnologies/reqore'
-import { cloneDeep, forEach } from 'lodash'
-import isArray from 'lodash/isArray'
-import map from 'lodash/map'
-import reduce from 'lodash/reduce'
-import size from 'lodash/size'
-import React, { useState } from 'react'
-import useMount from 'react-use/lib/useMount'
-import useUpdateEffect from 'react-use/lib/useUpdateEffect'
-import styled from 'styled-components'
-import { isObject } from 'util'
-import Spacer from '../components/Spacer'
-import SubField from '../components/SubField'
-import { fetchData } from '../utils'
-import { validateField } from '../validator'
-import AutoField from './auto'
-import { t } from './dataProvider'
-import SelectField from './select'
+import { ReqoreMessage, ReqoreControlGroup } from '@qoretechnologies/reqore';
+import { cloneDeep, forEach } from 'lodash';
+import isArray from 'lodash/isArray';
+import map from 'lodash/map';
+import reduce from 'lodash/reduce';
+import size from 'lodash/size';
+import React, { useState } from 'react';
+import useMount from 'react-use/lib/useMount';
+import useUpdateEffect from 'react-use/lib/useUpdateEffect';
+import styled from 'styled-components';
+import { isObject } from 'util';
+import Spacer from '../components/Spacer';
+import SubField from '../components/SubField';
+import { fetchData } from '../utils';
+import { validateField } from '../validator';
+import AutoField from './auto';
+import SelectField from './select';
+import { t } from './dataProvider';
+import SelectField from './select';
 
 export const StyledOptionField = styled.div`
   padding: 10px;
@@ -41,20 +42,27 @@ export const StyledOptionField = styled.div`
     border-bottom-left-radius: 3px;
     border-bottom-right-radius: 3px;
   }
-`
+`;
 
-const getType = (type) => (isArray(type) ? type[0] : type)
+const getType = (type: IQorusType | IQorusType[]): IQorusType =>
+  isArray(type) ? type[0] : type;
 
 /* "Fix options to be an object with the correct type." */
-export const fixOptions = (value: IOptions = {}, options: IOptionsSchema): IOptions => {
-  const fixedValue = cloneDeep(value)
+export const fixOptions = (
+  value: IOptions = {},
+  options: IOptionsSchema
+): IOptions => {
+  const fixedValue = cloneDeep(value);
 
   // Add missing required options to the fixedValue
   forEach(options, (option, name) => {
     if (option.required && !fixedValue[name]) {
-      fixedValue[name] = { type: option.type, value: option.default_value }
+      fixedValue[name] = {
+        type: getType(option.type),
+        value: option.default_value,
+      };
     }
-  })
+  });
 
   return reduce(
     fixedValue,
@@ -64,16 +72,16 @@ export const fixOptions = (value: IOptions = {}, options: IOptionsSchema): IOpti
           ...newValue,
           [optionName]: {
             type: getType(options[optionName].type),
-            value: option
-          }
-        }
+            value: option,
+          },
+        };
       }
 
-      return { ...newValue, [optionName]: option }
+      return { ...newValue, [optionName]: option };
     },
     {}
-  )
-}
+  );
+};
 
 export type IQorusType =
   | 'string'
@@ -92,122 +100,213 @@ export type IQorusType =
   | 'job'
   | 'data-provider'
   | 'file-as-string'
+  | 'select-string';
+
 export type TOption = {
-  type: IQorusType
-  value: any
-}
+  type: IQorusType;
+  value: any;
+  op?: string;
+};
 export type IOptions = {
-  [optionName: string]: TOption
-}
+  [optionName: string]: TOption;
+};
 
 export interface IOptionsSchema {
-  type: IQorusType
-  default_value?: any
-  required?: boolean
+  [optionName: string]: {
+    type: IQorusType | IQorusType[];
+    default_value?: any;
+    required?: boolean;
+    allowed_values?: any[];
+    sensitive?: boolean;
+    desc?: string;
+  };
+}
+
+export interface IOperator {
+  type: IQorusType;
+  default_value?: any;
+  required?: boolean;
+  name: string;
+  desc: string;
+}
+
+export interface IOperatorsSchema {
+  [operatorName: string]: IOperator;
 }
 
 export interface IOptionsProps {
-  name: string
-  url?: string
-  customUrl?: string
-  value?: IOptions
-  options?: IOptionsSchema
-  onChange: (name: string, value?: IOptions) => void
-  placeholder?: string
+  name: string;
+  url?: string;
+  customUrl?: string;
+  value?: IOptions;
+  options?: IOptionsSchema;
+  onChange: (name: string, value?: IOptions) => void;
+  placeholder?: string;
+  operatorsUrl?: string;
+  noValueString?: string;
 }
 
-const Options = ({ name, value, onChange, url, customUrl, placeholder, ...rest }: IOptionsProps) => {
-  const [options, setOptions] = useState<IOptionsSchema | undefined>(rest?.options || undefined)
-  //const [selectedOptions, setSelectedOptions] = useState(null);
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
+const Options = ({
+  name,
+  value,
+  onChange,
+  url,
+  customUrl,
+  placeholder,
+  operatorsUrl,
+  noValueString,
+  ...rest
+}: IOptionsProps) => {
+  const [options, setOptions] = useState<IOptionsSchema | undefined>(
+    rest?.options || undefined
+  );
+  const [operators, setOperators] = useState<IOperatorsSchema | undefined>({});
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const getUrl = () => customUrl || `/options/${url}`
+  const getUrl = () => customUrl || `/options/${url}`;
 
   useMount(() => {
     if (url || customUrl) {
-      ;(async () => {
-        setOptions(undefined)
-        setLoading(true)
+      (async () => {
+        setOptions(undefined);
+        setLoading(true);
         // Fetch the options for this mapper type
-        const data = await fetchData(getUrl())
+        const data = await fetchData(getUrl());
 
-        console.log(data)
+        console.log(data);
 
         if (data.error) {
-          setLoading(false)
-          setOptions(undefined)
-          return
+          setLoading(false);
+          setOptions(undefined);
+          return;
         }
-        onChange(name, fixOptions(value || {}, data.data))
+        onChange(name, fixOptions(value || {}, data.data));
         // Save the new options
-        setLoading(false)
-        setOptions(data.data)
-      })()
+        setLoading(false);
+        setOptions(data.data);
+      })();
     }
-  })
+    if (operatorsUrl) {
+      (async () => {
+        setOperators(undefined);
+        setLoading(true);
+        // Fetch the options for this mapper type
+        const data = await fetchData(`/${operatorsUrl}`);
+
+        if (data.error) {
+          setLoading(false);
+          setOperators({});
+          return;
+        }
+        // Save the new options
+        setLoading(false);
+        setOperators(data.data);
+      })();
+    }
+  });
 
   useUpdateEffect(() => {
     if (url || customUrl) {
-      ;(async () => {
-        setOptions(undefined)
-        setError(null)
-        removeValue()
-        setLoading(true)
+      (async () => {
+        setOptions(undefined);
+        setError(null);
+        removeValue();
+        setLoading(true);
         // Fetch the options for this mapper type
-        const data = await fetchData(getUrl())
+        const data = await fetchData(getUrl());
         if (data.error) {
-          setLoading(false)
-          setOptions(undefined)
-          return
+          setLoading(false);
+          setOptions(undefined);
+          return;
         }
         // Save the new options
-        setLoading(false)
-        setOptions(data.data)
-        onChange(name, fixOptions({}, data.data))
-      })()
+        setLoading(false);
+        setOptions(data.data);
+        onChange(name, fixOptions({}, data.data));
+      })();
     }
-  }, [url, customUrl])
+  }, [url, customUrl]);
 
-  const handleValueChange = (optionName: string, currentValue: any, val?: any, type?: string) => {
+  useUpdateEffect(() => {
+    if (operatorsUrl) {
+      (async () => {
+        setOperators(undefined);
+        setLoading(true);
+        // Fetch the options for this mapper type
+        const data = await fetchData(`/${operatorsUrl}`);
+
+        if (data.error) {
+          setLoading(false);
+          setOperators({});
+          return;
+        }
+        // Save the new options
+        setLoading(false);
+        setOperators(data.data);
+      })();
+    }
+  }, [operatorsUrl]);
+
+  const handleValueChange = (
+    optionName: string,
+    currentValue: any,
+    val?: any,
+    type?: string
+  ) => {
     onChange(name, {
       ...currentValue,
       [optionName]: {
+        ...currentValue[optionName],
         type,
-        value: val
-      }
-    })
-  }
+        value: val,
+      },
+    });
+  };
+
+  const handleOperatorChange = (
+    optionName: string,
+    currentValue: any,
+    operator?: string
+  ) => {
+    onChange(name, {
+      ...currentValue,
+      [optionName]: {
+        ...currentValue[optionName],
+        op: operator,
+      },
+    });
+  };
 
   const removeValue = () => {
-    onChange(name, undefined)
-  }
+    onChange(name, undefined);
+  };
 
   const removeSelectedOption = (optionName: string) => {
-    delete value?.[optionName]
+    delete value?.[optionName];
 
-    onChange(name, value)
-  }
+    onChange(name, value);
+  };
 
   if (error) {
     return (
-      <ReqoreMessage intent="danger">
+      <ReqoreMessage intent='danger'>
         <p style={{ fontWeight: 500 }}>{t('ErrorLoadingOptions')}</p>
         {t(error)}
       </ReqoreMessage>
-    )
+    );
   }
 
   if (loading) {
-    return <p>{t('LoadingOptions')}</p>
+    return <p>{t('LoadingOptions')}</p>;
   }
 
-  if (!size(options)) {
+  if (!options || !size(options)) {
     return (
-      <ReqoreMessage intent="warning" flat inverted>
+      <ReqoreMessage intent='warning' flat inverted>
         {t('No options available for this factory')}
       </ReqoreMessage>
-    )
+    );
   }
 
   const addSelectedOption = (optionName: string) => {
@@ -215,41 +314,49 @@ const Options = ({ name, value, onChange, url, customUrl, placeholder, ...rest }
       optionName,
       value,
       options[optionName].default_value,
-      getTypeAndCanBeNull(options[optionName].type, options[optionName].allowed_values).type
-    )
-  }
+      getTypeAndCanBeNull(
+        options[optionName].type,
+        options[optionName].allowed_values
+      ).type
+    );
+  };
 
-  const getTypeAndCanBeNull = (type: string, allowed_values: any[]) => {
-    let canBeNull = false
-    let realType = isArray(type) ? type[0] : type
+  const getTypeAndCanBeNull = (
+    type: IQorusType | IQorusType[],
+    allowed_values: any[]
+  ) => {
+    let canBeNull = false;
+    let realType = getType(type);
 
     if (realType?.startsWith('*')) {
-      realType = realType.replace('*', '')
-      canBeNull = true
+      realType = realType.replace('*', '') as IQorusType;
+      canBeNull = true;
     }
 
-    realType = realType === 'string' && allowed_values ? 'select-string' : realType
+    realType =
+      realType === 'string' && allowed_values ? 'select-string' : realType;
 
     return {
       type: realType,
       defaultType: realType,
-      defaultInternalType: realType === 'auto' || realType === 'any' ? undefined : realType,
-      canBeNull
-    }
-  }
+      defaultInternalType:
+        realType === 'auto' || realType === 'any' ? undefined : realType,
+      canBeNull,
+    };
+  };
 
-  const fixedValue = fixOptions(value, options)
+  const fixedValue = fixOptions(value, options);
   const filteredOptions = reduce(
     options,
     (newOptions, option, name) => {
       if (fixedValue && fixedValue[name]) {
-        return newOptions
+        return newOptions;
       }
 
-      return { ...newOptions, [name]: option }
+      return { ...newOptions, [name]: option };
     },
     {}
-  )
+  );
 
   return (
     <>
@@ -261,60 +368,100 @@ const Options = ({ name, value, onChange, url, customUrl, placeholder, ...rest }
                 subtle
                 key={optionName}
                 title={optionName}
-                isValid={validateField(getType(type), other.value)}
+                isValid={
+                  validateField(getType(type), other.value) && operatorsUrl
+                    ? !!other.op
+                    : true
+                }
                 detail={getType(options[optionName].type)}
                 desc={options[optionName].desc}
                 onRemove={
                   !options[optionName].required
                     ? () => {
-                        removeSelectedOption(optionName)
+                        removeSelectedOption(optionName);
                       }
                     : undefined
                 }
               >
-                <AutoField
-                  {...getTypeAndCanBeNull(type, options[optionName].allowed_values)}
-                  name={optionName}
-                  onChange={(optionName, val) => {
-                    if (val !== undefined) {
-                      handleValueChange(
-                        optionName,
-                        fixedValue,
-                        val,
-                        getTypeAndCanBeNull(type, options[optionName].allowed_values).type
-                      )
-                    }
-                  }}
-                  noSoft={!!rest?.options}
-                  value={other.value}
-                  sensitive={options[optionName].sensitive}
-                  default_value={options[optionName].default}
-                  allowed_values={options[optionName].allowed_values}
-                />
+                <ReqoreControlGroup fluid>
+                  {size(operators) ? (
+                    <SelectField
+                      defaultItems={map(operators, (operator) => ({
+                        name: operator.name,
+                        desc: operator.desc,
+                      }))}
+                      value={
+                        other.op && `Operator: ${operators?.[other.op].name}`
+                      }
+                      onChange={(_n, val) => {
+                        if (val !== undefined) {
+                          handleOperatorChange(
+                            optionName,
+                            fixedValue,
+                            findKey(
+                              operators,
+                              (operator) => operator.name === val
+                            )
+                          );
+                        }
+                      }}
+                    />
+                  ) : null}
+                  <AutoField
+                    {...getTypeAndCanBeNull(
+                      type,
+                      options[optionName].allowed_values
+                    )}
+                    name={optionName}
+                    onChange={(optionName, val) => {
+                      if (val !== undefined) {
+                        handleValueChange(
+                          optionName,
+                          fixedValue,
+                          val,
+                          getTypeAndCanBeNull(
+                            type,
+                            options[optionName].allowed_values
+                          ).type
+                        );
+                      }
+                    }}
+                    noSoft={!!rest?.options}
+                    value={other.value}
+                    sensitive={options[optionName].sensitive}
+                    default_value={options[optionName].default}
+                    allowed_values={options[optionName].allowed_values}
+                  />
+                </ReqoreControlGroup>
               </SubField>
             </StyledOptionField>
           ) : null
         )}
       </div>
       {size(fixedValue) === 0 && (
-        <ReqoreMessage intent="info" inverted flat>
-          {t('No options selected. Please add options from the list.')}
+        <ReqoreMessage intent='info' inverted flat>
+          {t(
+            noValueString ||
+              'No options selected. Please add options from the list.'
+          )}
         </ReqoreMessage>
       )}
       <Spacer size={10} />
       {size(filteredOptions) >= 1 && (
         <SelectField
-          name="options"
+          name='options'
           defaultItems={Object.keys(filteredOptions).map((option) => ({
             name: option,
-            desc: options[option].desc
+            desc: options[option].desc,
           }))}
           onChange={(_name, value) => addSelectedOption(value)}
-          placeholder={`${t(placeholder || 'Add new option')} (${size(filteredOptions)})`}
+          placeholder={`${t(placeholder || 'Add new option')} (${size(
+            filteredOptions
+          )})`}
         />
       )}
     </>
-  )
-}
+  );
+};
 
-export default Options
+export default Options;

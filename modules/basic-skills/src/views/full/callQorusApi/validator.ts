@@ -1,43 +1,44 @@
-import { isDateValid } from '@blueprintjs/datetime/lib/esm/common/dateUtils';
-import jsyaml from 'js-yaml';
-import every from 'lodash/every';
-import isArray from 'lodash/isArray';
-import isNaN from 'lodash/isNaN';
-import isNumber from 'lodash/isNumber';
-import isObject from 'lodash/isPlainObject';
-import size from 'lodash/size';
-import uniqWith from 'lodash/uniqWith';
-import { isBoolean, isNull, isString, isUndefined } from 'util';
-import { maybeBuildOptionProvider } from './fields/dataProvider';
+import { isDateValid } from '@blueprintjs/datetime/lib/esm/common/dateUtils'
+import jsyaml from 'js-yaml'
+import every from 'lodash/every'
+import isArray from 'lodash/isArray'
+import isNaN from 'lodash/isNaN'
+import isNumber from 'lodash/isNumber'
+import isObject from 'lodash/isPlainObject'
+import size from 'lodash/size'
+import uniqWith from 'lodash/uniqWith'
+import { isBoolean, isNull, isString, isUndefined } from 'util'
+import { maybeBuildOptionProvider } from './fields/dataProvider'
+import { TOption } from './fields/systemOptions'
 
-const cron = require('cron-validator');
+const cron = require('cron-validator')
 
-export const validateField: (
-  type: string,
-  value: any,
-  field?: any,
-  canBeNull?: boolean
-) => boolean = (type, value, field, canBeNull) => {
+export const validateField: (type: string, value: any, field?: any, canBeNull?: boolean) => boolean = (
+  type,
+  value,
+  field,
+  canBeNull
+) => {
   if (!type) {
-    return false;
+    return false
   }
   // Check if the type starts with a * to indicate it can be null
   if (type.startsWith('*')) {
-    type = type.substring(1);
-    canBeNull = true;
+    type = type.substring(1)
+    canBeNull = true
   }
   // If the value can be null an is null
   // immediately return true, no matter what type
   if (canBeNull && isNull(value)) {
-    return true;
+    return true
   }
   // Get the actual type
   // Check if there is a `<` in the type
-  const pos: number = type.indexOf('<');
+  const pos: number = type.indexOf('<')
   // If there is a <
   if (pos > 0) {
     // Get the type from start to the position of the `<`
-    type = type.slice(0, pos);
+    type = type.slice(0, pos)
   }
   // Check individual types
   switch (type) {
@@ -55,252 +56,213 @@ export const validateField: (
     case 'long-string':
     case 'method-name': {
       if (value === undefined || value === null || value === '') {
-        return false;
+        return false
       }
 
-      let isValid = true;
+      let isValid = true
 
       // Check if this field has to be a valid identifier
       if (field?.has_to_be_valid_identifier) {
-        isValid = !value.match(/^[0-9]|\W/);
+        isValid = !value.match(/^[0-9]|\W/)
       }
 
       // Strings cannot be empty
-      return isValid;
+      return isValid
     }
     case 'array-of-pairs': {
-      console.log('array-of-pairs', value, type, field);
-      let valid = true;
+      console.log('array-of-pairs', value, type, field)
+      let valid = true
       // Check if every pair has key & value
       // assigned properly
       if (
         !value.every(
-          (pair: { [key: string]: string }): boolean =>
-            pair[field.fields[0]] !== '' && pair[field.fields[1]] !== ''
+          (pair: { [key: string]: string }): boolean => pair[field.fields[0]] !== '' && pair[field.fields[1]] !== ''
         )
       ) {
-        valid = false;
+        valid = false
       }
       // Get a list of unique values
-      const uniqueValues: any[] = uniqWith(
-        value,
-        (cur, prev) => cur[field.fields[0]] === prev[field.fields[0]]
-      );
+      const uniqueValues: any[] = uniqWith(value, (cur, prev) => cur[field.fields[0]] === prev[field.fields[0]])
       // Check if there are any duplicates
       if (size(uniqueValues) !== size(value)) {
-        valid = false;
+        valid = false
       }
 
-      return valid;
+      return valid
     }
     case 'class-connectors': {
-      let valid = true;
+      let valid = true
       // Check if every pair has name, input method and output method
       // assigned properly
-      if (
-        !value.every(
-          (pair: { [key: string]: string }): boolean =>
-            pair.name !== '' && pair.method !== ''
-        )
-      ) {
-        valid = false;
+      if (!value.every((pair: { [key: string]: string }): boolean => pair.name !== '' && pair.method !== '')) {
+        valid = false
       }
       // Get a list of unique values
-      const uniqueValues: any[] = uniqWith(
-        value,
-        (cur, prev) => cur.name === prev.name
-      );
+      const uniqueValues: any[] = uniqWith(value, (cur, prev) => cur.name === prev.name)
       // Check if there are any duplicates
       if (size(uniqueValues) !== size(value)) {
-        valid = false;
+        valid = false
       }
 
-      return valid;
+      return valid
     }
     // Classes check
     case 'class-array': {
-      let valid = true;
+      let valid = true
       // Check if the fields are not empty
-      if (
-        !value.every(
-          (pair: { [key: string]: string }): boolean =>
-            pair.name && pair.name !== ''
-        )
-      ) {
-        valid = false;
+      if (!value.every((pair: { [key: string]: string }): boolean => pair.name && pair.name !== '')) {
+        valid = false
       }
       // Get a list of unique values
       const uniqueValues: any[] = uniqWith(
         value,
-        (cur, prev) =>
-          `${cur.prefix}${cur.name}` === `${prev.prefix}${prev.name}`
-      );
+        (cur, prev) => `${cur.prefix}${cur.name}` === `${prev.prefix}${prev.name}`
+      )
       // Check if there are any duplicates
       if (size(uniqueValues) !== size(value)) {
-        valid = false;
+        valid = false
       }
 
-      return valid;
+      return valid
     }
     case 'int':
     case 'softint':
     case 'number':
-      return !isNaN(value) && getTypeFromValue(value) === 'int';
+      return !isNaN(value) && getTypeFromValue(value) === 'int'
     case 'float':
-      return (
-        !isNaN(value) &&
-        (getTypeFromValue(value) === 'float' ||
-          getTypeFromValue(value) === 'int')
-      );
+      return !isNaN(value) && (getTypeFromValue(value) === 'float' || getTypeFromValue(value) === 'int')
     case 'select-array':
     case 'array':
     case 'file-tree':
       // Check if there is atleast one value
       // selected
-      return value && value.length !== 0;
+      return value && value.length !== 0
     case 'cron':
       // Check if the cron is valid
-      return cron.isValidCron(value, { alias: true });
+      return cron.isValidCron(value, { alias: true })
     case 'date':
       // Check if the date is valid
-      return (
-        value !== undefined &&
-        value !== null &&
-        value !== '' &&
-        new Date(value).toString() !== 'Invalid Date'
-      );
+      return value !== undefined && value !== null && value !== '' && new Date(value).toString() !== 'Invalid Date'
     case 'hash':
     case 'hash<auto>': {
       // Get the parsed yaml
-      const parsedValue: any = maybeParseYaml(value);
+      const parsedValue: any = maybeParseYaml(value)
       // If the value is not an object or empty
       if (!parsedValue || !isObject(parsedValue)) {
-        return false;
+        return false
       }
-      return true;
+      return true
     }
     case 'list':
     case 'softlist':
     case 'list<auto>': {
       // Get the parsed yaml
-      const parsedValue: any = maybeParseYaml(value);
+      const parsedValue: any = maybeParseYaml(value)
       // If the value is not an object or empty
       if (!parsedValue || !isArray(parsedValue)) {
-        return false;
+        return false
       }
-      return true;
+      return true
     }
     case 'mapper-code':
       if (!value) {
-        return false;
+        return false
       }
       // Split the value
-      const [code, method] = value.split('::');
+      const [code, method] = value.split('::')
       // Both fields need to be strings & filled
-      return validateField('string', code) && validateField('string', method);
+      return validateField('string', code) && validateField('string', method)
     case 'type-selector':
     case 'data-provider':
     case 'api-call':
     case 'search-single':
-      let newValue = maybeBuildOptionProvider(value);
+      let newValue = maybeBuildOptionProvider(value)
 
       if (!newValue) {
-        return false;
+        return false
       }
 
       // Api call only supports  requests / response
       if (type === 'api-call' && !value.supports_request) {
-        return false;
+        return false
       }
 
       if (
         value.use_args &&
         value.args &&
         value.args?.type !== 'nothing' &&
-        !validateField(
-          value.args.type === 'hash' ? 'system-options' : value.args.type,
-          value.args.value
-        )
+        !validateField(value.args.type === 'hash' ? 'system-options' : value.args.type, value.args.value)
       ) {
-        return false;
+        return false
       }
 
       if (
         type === 'search-single' &&
-        (size(value.search_args) === 0 ||
-          !validateField('system-options-with-operators', value.search_args))
+        (size(value.search_args) === 0 || !validateField('system-options-with-operators', value.search_args))
       ) {
-        return false;
+        return false
       }
 
       if (newValue?.type === 'factory') {
         if (newValue.optionsChanged) {
-          return false;
+          return false
         }
 
-        let options = true;
+        let options = true
 
         if (newValue.options) {
-          options = validateField('system-options', newValue.options);
+          options = validateField('system-options', newValue.options)
         }
 
         if (newValue.search_options) {
-          options = validateField('system-options', newValue.search_options);
+          options = validateField('system-options', newValue.search_options)
         }
 
         // Type path and name are required
-        return !!(newValue.type && newValue.name && options);
+        return !!(newValue.type && newValue.name && options)
       }
 
-      return !!(newValue.type && newValue.path && newValue.name);
+      return !!(newValue.type && newValue.path && newValue.name)
     case 'context-selector':
       if (isString(value)) {
-        const cont: string[] = value.split(':');
-        return (
-          validateField('string', cont[0]) && validateField('string', cont[1])
-        );
+        const cont: string[] = value.split(':')
+        return validateField('string', cont[0]) && validateField('string', cont[1])
       }
-      return !!value.iface_kind && !!value.name;
+      return !!value.iface_kind && !!value.name
     case 'auto':
     case 'any': {
       // Parse the string as yaml
-      let yamlCorrect = true;
-      let parsedData;
+      let yamlCorrect = true
+      let parsedData
       // Parse the yaml
       try {
-        parsedData = jsyaml.safeLoad(value);
+        parsedData = jsyaml.safeLoad(value)
       } catch (e) {
-        yamlCorrect = false;
+        yamlCorrect = false
       }
 
       if (!yamlCorrect) {
-        return false;
+        return false
       }
 
       if (parsedData) {
-        return validateField(getTypeFromValue(parsedData), value);
+        return validateField(getTypeFromValue(parsedData), value)
       }
 
-      return false;
+      return false
     }
     case 'processor': {
-      let valid = true;
+      let valid = true
 
       // Validate the input and output types
-      if (
-        value?.['processor-input-type'] &&
-        !validateField('type-selector', value?.['processor-input-type'])
-      ) {
-        valid = false;
+      if (value?.['processor-input-type'] && !validateField('type-selector', value?.['processor-input-type'])) {
+        valid = false
       }
-      if (
-        value?.['processor-output-type'] &&
-        !validateField('type-selector', value?.['processor-output-type'])
-      ) {
-        valid = false;
+      if (value?.['processor-output-type'] && !validateField('type-selector', value?.['processor-output-type'])) {
+        valid = false
       }
 
-      return valid;
+      return valid
     }
     case 'options':
     case 'pipeline-options':
@@ -308,137 +270,133 @@ export const validateField: (
     case 'system-options': {
       if (!value || size(value) === 0) {
         if (canBeNull) {
-          return true;
+          return true
         }
 
-        return false;
+        return false
       }
 
       return every(value, (optionData) =>
         typeof optionData !== 'object'
           ? validateField(getTypeFromValue(optionData), optionData)
           : validateField(optionData.type, optionData.value)
-      );
+      )
     }
     case 'system-options-with-operators': {
       if (!value || size(value) === 0) {
         if (canBeNull) {
-          return true;
+          return true
         }
 
-        return false;
+        return false
       }
 
       return every(value, (optionData: TOption) => {
         let isValid: boolean =
           typeof optionData !== 'object'
             ? validateField(getTypeFromValue(optionData), optionData)
-            : validateField(optionData.type, optionData.value);
+            : validateField(optionData.type, optionData.value)
 
         if (!optionData.op) {
-          isValid = false;
+          isValid = false
         }
 
-        return isValid;
-      });
+        return isValid
+      })
     }
     case 'nothing':
-      return false;
+      return false
     default:
-      return true;
+      return true
   }
-};
+}
 
 export const maybeParseYaml: (yaml: any) => any = (yaml) => {
   // If we are dealing with basic boolean
   if (yaml === true || yaml === false) {
-    return yaml;
+    return yaml
   }
   // Leave numbers as they are
   if (isNumber(yaml)) {
-    return yaml;
+    return yaml
   }
 
   // Leave dates
   if (isDateValid(yaml)) {
-    return yaml;
+    return yaml
   }
   // Check if the value isn't empty
   if (yaml === undefined || yaml === null || yaml === '' || !isString(yaml)) {
-    return null;
+    return null
   }
   // Parse the string as yaml
-  let yamlCorrect = true;
-  let parsedData;
+  let yamlCorrect = true
+  let parsedData
   // Parse the yaml
   try {
-    parsedData = jsyaml.safeLoad(String(yaml));
+    parsedData = jsyaml.safeLoad(String(yaml))
   } catch (e) {
-    yamlCorrect = false;
+    yamlCorrect = false
   }
 
   if (!yamlCorrect) {
-    return null;
+    return null
   }
 
   if (!isNull(parsedData) && !isUndefined(parsedData)) {
-    return parsedData;
+    return parsedData
   }
 
-  return null;
-};
+  return null
+}
 
 export const isValueSet = (value: any, canBeNull?: boolean) => {
   if (canBeNull) {
-    return !isUndefined(value);
+    return !isUndefined(value)
   }
 
-  return !isNull(value) && !isUndefined(value);
-};
+  return !isNull(value) && !isUndefined(value)
+}
 
 export const getValueOrDefaultValue = (value, defaultValue, canBeNull) => {
   if (isValueSet(value, canBeNull)) {
-    return value;
+    return value
   }
 
   if (isValueSet(defaultValue, canBeNull)) {
-    return defaultValue;
+    return defaultValue
   }
 
-  return undefined;
-};
+  return undefined
+}
 
 export const getTypeFromValue = (value: any) => {
   if (isNull(value)) {
-    return 'null';
+    return 'null'
   }
   if (isBoolean(value)) {
-    return 'bool';
+    return 'bool'
   }
 
   if (value === 0 || (Number(value) === value && value % 1 === 0)) {
-    return 'int';
+    return 'int'
   }
 
-  if (
-    value === 0 ||
-    value === 0.0 ||
-    (Number(value) === value && value % 1 !== 0)
-  ) {
-    return 'float';
+  if (value === 0 || value === 0.0 || (Number(value) === value && value % 1 !== 0)) {
+    return 'float'
   }
   if (isObject(value)) {
-    return 'hash';
+    return 'hash'
   }
   if (isArray(value)) {
-    return 'list';
+    return 'list'
   }
   if (new Date(value).toString() !== 'Invalid Date') {
-    return 'date';
+    return 'date'
   }
   if (isString(value)) {
-    return 'string';
+    return 'string'
   }
 
-  return 'none';
-};
+  return 'none'
+}

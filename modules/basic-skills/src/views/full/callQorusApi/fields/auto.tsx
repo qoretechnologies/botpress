@@ -121,7 +121,7 @@ const AutoField: FunctionComponent<any> = ({
     // If this field is set to null
     if (isSetToNull) {
       // Render a readonly field with null
-      return <StringField name={name} value={null} onChange={handleChange} read_only canBeNull />
+      return <StringField name={name} value={null} onChange={handleChange as any} read_only canBeNull />
     }
     if (!currentType) {
       return null

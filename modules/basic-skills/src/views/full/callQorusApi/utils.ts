@@ -1,10 +1,12 @@
+import { getUrl } from '../../../backend/utils'
+
 export const fetchData = async (
   url: string,
   method: 'GET' | 'POST' | 'PUT' = 'GET'
 ): Promise<{ data?: any; error?: string }> => {
-  const realUrl = `${window.location.protocol}://hq.qoretechnologies.com:${
-    window.location.protocol === 'https' ? '8092' : '8091'
-  }/api/latest/${url}`
+  console.log(window)
+
+  const realUrl = `${getUrl()}${url}`
 
   try {
     const res = await fetch(realUrl, {

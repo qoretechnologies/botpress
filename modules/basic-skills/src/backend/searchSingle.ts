@@ -1,5 +1,5 @@
 import * as sdk from 'botpress/sdk'
-import { omit, reduce } from 'lodash'
+import { omit } from 'lodash'
 import { getUrl } from './utils'
 
 const generateFlow = async (data: any, metadata: sdk.FlowGeneratorMetadata): Promise<sdk.FlowGenerationResult> => {
@@ -15,14 +15,7 @@ const generateFlow = async (data: any, metadata: sdk.FlowGeneratorMetadata): Pro
 }
 
 const createNodes = (data) => {
-  /* It's a way to flatten the args object. */
-  data.provider.args = reduce(
-    data.provider.args.value,
-    (acc, val, key) => {
-      return { ...acc, [key]: val }
-    },
-    {}
-  )
+  data.provider.where = data.provider.search_args
 
   const nodes: sdk.SkillFlowNode[] = [
     {
@@ -32,11 +25,20 @@ const createNodes = (data) => {
           type: sdk.NodeActionType.RunAction,
           name: 'basic-skills/call_api',
           args: {
-            url: `${getUrl()}dataprovider/callApiFromUi`,
+            url: `${getUrl()}dataprovider/searchRecords`,
             method: 'POST',
             randomId: data.randomId,
             /* A way to pass data to the action. */
-            body: omit(data.provider, ['is_api_call', 'desc', 'use_args', 'supports_request']),
+            body: omit(data.provider, [
+              'is_api_call',
+              'desc',
+              'use_args',
+              'supports_request',
+              'search_args',
+              'supports_read'
+            ]),
+            memory: 'temp',
+            variable: 'response',
             headers: {
               Accept: 'application/json',
               Authorization: `Basic ${Buffer.from('fwitosz:fwitosz42').toString('base64')}`

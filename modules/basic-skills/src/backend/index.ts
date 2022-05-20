@@ -7,6 +7,7 @@ import apiCall from './callApi'
 import qorusApiCall from './callQorusApi'
 import choice from './choice'
 import email from './email'
+import searchSingle from './searchSingle'
 import slot from './slot'
 
 const onServerReady = async (bp: typeof sdk) => {
@@ -35,6 +36,12 @@ const skillsToRegister: sdk.Skill[] = [
     name: 'module.basic-skills.callQorusApi',
     icon: 'qore',
     flowGenerator: qorusApiCall.generateFlow
+  },
+  {
+    id: 'SearchSingle',
+    name: 'module.basic-skills.searchSingle',
+    icon: 'qore',
+    flowGenerator: searchSingle.generateFlow
   },
   {
     id: 'Slot',

@@ -25,8 +25,8 @@ const NumberField: FunctionComponent<INumberField & any> = ({ name, onChange, va
       className={fill && Classes.FILL}
       value={value ?? default_value ?? ''}
       onChange={handleInputChange}
-      step={type === 'int' || type === 'number' ? 1 : 0.1}
       onClearClick={handleResetClick}
+      // @ts-expect-error
       type="number"
     />
   )

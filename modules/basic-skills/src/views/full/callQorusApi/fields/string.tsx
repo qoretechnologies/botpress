@@ -32,7 +32,7 @@ const StringField = ({
   canBeNull,
   sensitive,
   autoFocus
-}: IStringField & IReqoreInputProps) => {
+}: IStringField & IReqoreInputProps & any) => {
   // Fetch data on mount
   useMount(() => {
     // Populate default value
@@ -53,13 +53,11 @@ const StringField = ({
     <ReqoreInput
       placeholder={placeholder}
       disabled={disabled}
-      readOnly={read_only}
       className={fill && Classes.FILL}
       value={canBeNull && isNull(value) ? 'Value set to [null]' : !value ? default_value || '' : value}
       onFocus={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
       onChange={handleInputChange}
-      type={sensitive ? 'password' : 'text'}
       autoFocus={autoFocus}
       onClearClick={handleResetClick}
     />

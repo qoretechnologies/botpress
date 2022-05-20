@@ -12,10 +12,12 @@ const callApi = async (url, method, body, memory, variable, headers) => {
     session: event.state.session
   }
   const renderedHeaders = bp.cms.renderTemplate(headers, context)
-  const renderedBody = bp.cms.renderTemplate(body, context)
+  let renderedBody = bp.cms.renderTemplate(body, context)
   const keySuffix = args.randomId ? `_${args.randomId}` : ''
 
-  
+  // this just slaps in the context object
+  renderedBody.context = context
+
   try {
     console.log('memory, variable', memory, variable)
     console.log(`Calling ${url} with ${method} and content: ${renderedBody}`)
@@ -26,7 +28,9 @@ const callApi = async (url, method, body, memory, variable, headers) => {
       data: renderedBody
     })
 
-    console.log('response', response)
+    console.log('event', event)
+    console.log('memory', memory)
+    console.log('variable', variable)
 
     event.state[memory][variable] = { body: response.data, status: response.status }
     event.state.temp[`valid${keySuffix}`] = true

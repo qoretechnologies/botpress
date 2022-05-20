@@ -1,6 +1,7 @@
 import { Button, Classes, Icon } from '@blueprintjs/core'
 import { ReqoreButton, ReqoreDropdown, ReqorePopover } from '@qoretechnologies/reqore'
 import { IReqoreButtonProps } from '@qoretechnologies/reqore/dist/components/Button'
+import { IReqoreIntent } from '@qoretechnologies/reqore/dist/constants/theme'
 import { includes } from 'lodash'
 import React, { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -21,6 +22,7 @@ export interface ISelectField {
   messageData: any
   warningMessageOnEmpty?: string
   autoSelect?: boolean
+  intent?: IReqoreIntent
 }
 
 export const StyledDialogSelectItem = styled.div`
@@ -76,7 +78,7 @@ export const StyledDialogSelectItem = styled.div`
   }
 `
 
-const SelectField: React.FC<ISelectField & any> = ({
+const SelectField = ({
   name,
   onChange,
   value,
@@ -91,8 +93,9 @@ const SelectField: React.FC<ISelectField & any> = ({
   context,
   editOnly,
   target_dir,
-  forceDropdown
-}) => {
+  forceDropdown,
+  intent
+}: ISelectField & any) => {
   const [items, setItems] = useState<any[]>(defaultItems || [])
   const [query, setQuery] = useState<string>('')
   const [isSelectDialogOpen, setSelectDialogOpen] = useState<boolean>(false)
@@ -170,7 +173,8 @@ const SelectField: React.FC<ISelectField & any> = ({
                     flat: true,
                     rightIcon: 'WindowFill',
                     onClick: () => setSelectDialogOpen(true),
-                    disabled
+                    disabled,
+                    intent
                   } as IReqoreButtonProps
                 }
               >
@@ -245,7 +249,8 @@ const SelectField: React.FC<ISelectField & any> = ({
               componentProps={
                 {
                   disabled,
-                  flat: true
+                  flat: true,
+                  intent
                 } as IReqoreButtonProps
               }
             />

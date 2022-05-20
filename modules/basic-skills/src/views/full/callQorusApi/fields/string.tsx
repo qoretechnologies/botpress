@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Classes } from '@blueprintjs/core'
 import { ReqoreInput } from '@qoretechnologies/reqore'
 import { IReqoreInputProps } from '@qoretechnologies/reqore/dist/components/Input'

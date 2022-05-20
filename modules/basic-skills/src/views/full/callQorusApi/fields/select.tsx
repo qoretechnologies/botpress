@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button, Classes, Icon } from '@blueprintjs/core'
 import { ReqoreButton, ReqoreDropdown, ReqorePopover } from '@qoretechnologies/reqore'
 import { IReqoreButtonProps } from '@qoretechnologies/reqore/dist/components/Button'

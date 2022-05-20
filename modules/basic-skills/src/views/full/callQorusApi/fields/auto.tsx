@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button, Callout, ControlGroup } from '@blueprintjs/core'
 import React, { FunctionComponent, useEffect, useState } from 'react'
 import useMount from 'react-use/lib/useMount'

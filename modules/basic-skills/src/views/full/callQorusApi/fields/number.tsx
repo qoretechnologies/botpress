@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Classes } from '@blueprintjs/core'
+import { setupPreviews } from '@previewjs/plugin-react/setup'
 import { ReqoreInput } from '@qoretechnologies/reqore'
 import React, { ChangeEvent, FunctionComponent } from 'react'
 
@@ -32,5 +33,12 @@ const NumberField: FunctionComponent<INumberField & any> = ({ name, onChange, va
     />
   )
 }
+
+setupPreviews(NumberField, {
+  Basic: {
+    name: 'Basic',
+    value: 23
+  }
+})
 
 export default NumberField

@@ -1,15 +1,18 @@
+import { setupPreviews } from '@previewjs/plugin-react/setup'
 import { ReqoreMessage, ReqorePanel } from '@qoretechnologies/reqore'
-import { cloneDeep, isEqual, map, reduce } from 'lodash'
+import { capitalize, cloneDeep, isEqual, map, reduce } from 'lodash'
 import size from 'lodash/size'
 import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useDebounce } from 'react-use'
-import styled from 'styled-components'
 import Spacer from '../components/Spacer'
 import { ApiCallArgs } from './apiCallArgs'
 import Provider, { providers } from './provider'
-import { SearchArgs } from './searchArgs'
+import { RecordQueryArgs } from './searchArgs'
 import Options, { IOptions } from './systemOptions'
+
+export type TRecordType = 'search' | 'search-single' | 'create' | 'update' | 'delete'
+export type TRealRecordType = 'read' | 'create' | 'update' | 'delete'
 
 export interface IConnectorFieldProps {
   title?: string
@@ -21,10 +24,18 @@ export interface IConnectorFieldProps {
   requiresRequest?: boolean
   minimal?: boolean
   isConfigItem?: boolean
-  isRecordSearch?: boolean
+  recordType?: TRecordType
 }
 
-export interface IProviderType {
+export type TProviderTypeSupports = {
+  [key in `supports_${TRealRecordType}`]?: boolean
+}
+
+export type TProviderTypeArgs = {
+  [key in `${TRecordType}_args`]?: IOptions | IOptions[]
+}
+
+export interface IProviderType extends TProviderTypeArgs, TProviderTypeSupports {
   type: string
   name: string
   path?: string
@@ -35,26 +46,43 @@ export interface IProviderType {
   use_args?: boolean
   args?: any
   supports_request?: boolean
-  supports_read?: boolean
   is_api_call?: boolean
-  search_args?: IOptions
   search_options?: IOptions
 }
 
-const StyledProviderUrl = styled.div`
-  min-height: 40px;
-  line-height: 40px;
+const supportsList = {
+  create: true
+}
 
-  span {
-    font-weight: 500;
+const supportsOperators = {
+  search: true,
+  'search-single': true
+}
+
+const supportsArguments = {
+  create: true,
+  update: true
+}
+
+const getRealRecordType = (recordType: TRecordType): TRealRecordType => {
+  return recordType.startsWith('search') ? 'read' : (recordType as TRealRecordType)
+}
+
+const shouldShowSearchArguments = (recordType: TRecordType, optionProvider: IProviderType | null): boolean => {
+  const realRecordType = recordType.startsWith('search') ? 'read' : recordType
+
+  if (['read', 'update', 'delete'].includes(realRecordType) && optionProvider?.[`supports_${realRecordType}`]) {
+    return true
   }
-`
 
-export const getUrlFromProvider: (
-  val: IProviderType | string,
-  withOptions?: boolean,
-  isRecordSearch?: boolean
-) => string = (val, withOptions, isRecordSearch) => {
+  return false
+}
+
+export const getUrlFromProvider: (val: IProviderType | string, withOptions?: boolean, isRecord?: boolean) => string = (
+  val,
+  withOptions,
+  isRecord
+) => {
   // If the val is a string, return it
   if (typeof val === 'string') {
     return val
@@ -82,7 +110,7 @@ export const getUrlFromProvider: (
   const endsInSubtype = path.endsWith('/request') || path.endsWith('/response')
 
   // Build the suffix
-  const realPath = `${suffix}${path}${endsInSubtype || is_api_call || isRecordSearch ? '' : recordSuffix || ''}${
+  const realPath = `${suffix}${path}${endsInSubtype || is_api_call || isRecord ? '' : recordSuffix || ''}${
     withOptions ? '/constructor_options' : ''
   }`
 
@@ -163,7 +191,7 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
   minimal,
   isConfigItem,
   requiresRequest,
-  isRecordSearch
+  recordType
 }) => {
   const [optionProvider, setOptionProvider] = useState<IProviderType | null>(maybeBuildOptionProvider(value))
   const [nodes, setChildren] = useState(
@@ -334,12 +362,13 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
         </>
       ) : null}
       {/* This means that we are working with a record search */}
-      {isRecordSearch && optionProvider?.supports_read ? (
+      {recordType && optionProvider && shouldShowSearchArguments(recordType, optionProvider) ? (
         <>
           <ReqorePanel collapsible label="Search arguments" padded rounded>
-            <SearchArgs
+            <RecordQueryArgs
+              type="search"
               url={getUrlFromProvider(optionProvider, false, true)}
-              value={optionProvider?.search_args}
+              value={optionProvider?.search_args as IOptions}
               onChange={(nm, val) => {
                 setOptionProvider((cur: IProviderType | null) => {
                   const result: IProviderType = {
@@ -372,8 +401,81 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
           </ReqorePanel>
         </>
       ) : null}
+      {/* This means that we are working with a record update */}
+      {recordType && optionProvider && supportsArguments[recordType] ? (
+        <ReqorePanel collapsible label={`${capitalize(recordType)} options`} padded rounded>
+          <RecordQueryArgs
+            type={recordType}
+            asList={supportsList[recordType]}
+            url={getUrlFromProvider(optionProvider, false, true)}
+            value={optionProvider?.[`${recordType}_args`]}
+            onChange={(_nm, val) => {
+              setOptionProvider((cur: IProviderType | null) => {
+                const result: IProviderType = {
+                  ...cur,
+                  [`${recordType}_args`]: val
+                } as IProviderType
+
+                return result
+              })
+            }}
+            hasOperators={supportsOperators[recordType] || false}
+          />
+        </ReqorePanel>
+      ) : null}
     </div>
   )
 }
+
+const PreviewProvider = (props: IConnectorFieldProps) => {
+  const [value, setValue] = useState<IProviderType | string>({
+    type: 'datasource',
+    name: 'omquser',
+    supports_read: true,
+    supports_update: true,
+    supports_create: true,
+    supports_delete: true,
+    path: '/bb_local',
+    use_args: true,
+    search_options: {
+      requires_result: {
+        type: 'bool',
+        value: null
+      }
+    }
+  })
+
+  console.log(value)
+
+  return <ConnectorField {...props} value={value} onChange={(_name, val) => setValue(val)} />
+}
+
+setupPreviews(PreviewProvider, {
+  'API Call': {
+    name: 'ApiCall',
+    value: undefined,
+    requiresRequest: true
+  },
+  Search: {
+    name: 'Search',
+    value: undefined,
+    recordType: 'search'
+  },
+  Update: {
+    name: 'Update',
+    value: undefined,
+    recordType: 'update'
+  },
+  Create: {
+    name: 'Create',
+    value: undefined,
+    recordType: 'create'
+  },
+  Delete: {
+    name: 'Delete',
+    value: undefined,
+    recordType: 'delete'
+  }
+})
 
 export default ConnectorField

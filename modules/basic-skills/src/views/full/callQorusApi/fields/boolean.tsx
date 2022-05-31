@@ -1,4 +1,6 @@
+import { setupPreviews } from '@previewjs/plugin-react/setup'
 import { ReqoreCheckbox } from '@qoretechnologies/reqore'
+import { noop } from 'lodash'
 import React from 'react'
 import useMount from 'react-use/lib/useMount'
 import { isUndefined } from 'util'
@@ -31,5 +33,13 @@ const BooleanField = ({ name, onChange, value, default_value, disabled }: any) =
     />
   )
 }
+
+setupPreviews(BooleanField, {
+  Basic: {
+    name: 'Boolean',
+    value: false,
+    onChange: noop
+  }
+})
 
 export default BooleanField

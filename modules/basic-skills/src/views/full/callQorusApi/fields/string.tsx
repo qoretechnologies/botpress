@@ -1,5 +1,3 @@
-// @ts-nocheck
-import { Classes } from '@blueprintjs/core'
 import { ReqoreInput } from '@qoretechnologies/reqore'
 import { IReqoreInputProps } from '@qoretechnologies/reqore/dist/components/Input'
 import React, { ChangeEvent } from 'react'
@@ -54,7 +52,7 @@ const StringField = ({
     <ReqoreInput
       placeholder={placeholder}
       disabled={disabled}
-      className={fill && Classes.FILL}
+      fluid={fill}
       value={canBeNull && isNull(value) ? 'Value set to [null]' : !value ? default_value || '' : value}
       onFocus={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}

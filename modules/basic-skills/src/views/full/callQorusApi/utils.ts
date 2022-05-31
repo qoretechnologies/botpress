@@ -28,3 +28,7 @@ export const fetchData = async (
     return { error: e }
   }
 }
+
+export const insertAtIndex = (array: any[] = [], index = 0, value) => {
+  return [...array.slice(0, index), value, ...array.slice(index)]
+}

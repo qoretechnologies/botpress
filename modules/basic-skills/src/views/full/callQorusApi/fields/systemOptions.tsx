@@ -1,5 +1,12 @@
-import { ReqoreControlGroup, ReqoreMessage } from '@qoretechnologies/reqore'
-import { cloneDeep, findKey, forEach } from 'lodash'
+import {
+  ReqoreButton,
+  ReqoreControlGroup,
+  ReqoreMessage,
+  ReqorePanel,
+  ReqoreTag,
+  ReqoreTagGroup
+} from '@qoretechnologies/reqore'
+import { cloneDeep, findKey, forEach, last } from 'lodash'
 import isArray from 'lodash/isArray'
 import map from 'lodash/map'
 import reduce from 'lodash/reduce'
@@ -11,11 +18,12 @@ import styled from 'styled-components'
 import { isObject } from 'util'
 import Spacer from '../components/Spacer'
 import SubField from '../components/SubField'
-import { fetchData } from '../utils'
+import { fetchData, insertAtIndex } from '../utils'
 import { validateField } from '../validator'
 import AutoField from './auto'
 import { t } from './dataProvider'
 import SelectField from './select'
+import { TemplateField } from './template'
 
 export const StyledOptionField = styled.div`
   padding: 10px;
@@ -43,17 +51,33 @@ export const StyledOptionField = styled.div`
   }
 `
 
-const getType = (type: IQorusType | IQorusType[]): IQorusType => (isArray(type) ? type[0] : type)
+const getType = (type: IQorusType | IQorusType[], operators?: IOperatorsSchema, operator?: TOperatorValue) => {
+  const finalType = getTypeFromOperator(operators, fixOperatorValue(operator)) || type
+
+  return isArray(finalType) ? finalType[0] : finalType
+}
+
+const getTypeFromOperator = (operators?: IOperatorsSchema, operatorData?: (string | null | undefined)[]) => {
+  if (!operators || !operatorData || !size(operatorData) || !last(operatorData)) {
+    return null
+  }
+
+  return operators[last(operatorData) as string]?.type || null
+}
+
+export const fixOperatorValue = (operator: TOperatorValue): (string | null | undefined)[] => {
+  return isArray(operator) ? operator : [operator]
+}
 
 /* "Fix options to be an object with the correct type." */
-export const fixOptions = (value: IOptions = {}, options: IOptionsSchema): IOptions => {
+export const fixOptions = (value: IOptions = {}, options: IOptionsSchema, operators?: IOperatorsSchema): IOptions => {
   const fixedValue = cloneDeep(value)
 
   // Add missing required options to the fixedValue
   forEach(options, (option, name) => {
     if (option.required && !fixedValue[name]) {
       fixedValue[name] = {
-        type: getType(option.type),
+        type: getType(option.type, operators, fixedValue[name]?.op),
         value: option.default_value
       }
     }
@@ -66,7 +90,7 @@ export const fixOptions = (value: IOptions = {}, options: IOptionsSchema): IOpti
         return {
           ...newValue,
           [optionName]: {
-            type: getType(options[optionName].type),
+            type: getType(options[optionName].type, operators, option.op),
             value: option
           }
         }
@@ -96,15 +120,20 @@ export type IQorusType =
   | 'data-provider'
   | 'file-as-string'
   | 'select-string'
+  | 'number'
+
+export type TOperatorValue = string | string[] | undefined | null
 
 export type TOption = {
   type: IQorusType
   value: any
   op?: string
 }
-export type IOptions = {
-  [optionName: string]: TOption
-}
+export type IOptions =
+  | {
+      [optionName: string]: TOption
+    }
+  | undefined
 
 export interface IOptionsSchema {
   [optionName: string]: {
@@ -118,11 +147,11 @@ export interface IOptionsSchema {
 }
 
 export interface IOperator {
-  type: IQorusType
-  default_value?: any
-  required?: boolean
+  type?: IQorusType
   name: string
   desc: string
+  supports_nesting?: boolean
+  selected?: boolean
 }
 
 export interface IOperatorsSchema {
@@ -242,6 +271,34 @@ const Options = ({
   }, [operatorsUrl])
 
   const handleValueChange = (optionName: string, currentValue: any = {}, val?: any, type?: string) => {
+    // Check if this option is already added
+    if (!currentValue[optionName]) {
+      // If it's not, add potential default operators
+      const defaultOperators: TOperatorValue = reduce(
+        operators,
+        (filteredOperators: TOperatorValue, operator, operatorKey) => {
+          if (operator.selected) {
+            return [...(filteredOperators as string[]), operatorKey]
+          }
+
+          return filteredOperators
+        },
+        []
+      )
+      // If there are default operators, add them to the value
+      if (defaultOperators?.length) {
+        onChange(name, {
+          ...currentValue,
+          [optionName]: {
+            type,
+            value: val,
+            op: defaultOperators
+          }
+        })
+
+        return
+      }
+    }
     onChange(name, {
       ...currentValue,
       [optionName]: {
@@ -252,12 +309,38 @@ const Options = ({
     })
   }
 
-  const handleOperatorChange = (optionName: string, currentValue: any = {}, operator?: string) => {
+  const handleOperatorChange = (optionName: string, currentValue: IOptions, operator: string, index: number) => {
     onChange(name, {
       ...currentValue,
       [optionName]: {
         ...currentValue[optionName],
-        op: operator
+        op: fixOperatorValue(currentValue[optionName].op).map((op, idx) => {
+          if (idx === index) {
+            return operator
+          }
+          return op as string
+        })
+      }
+    })
+  }
+
+  // Add empty operator at the provider index
+  const handleAddOperator = (optionName, currentValue: IOptions, index: number) => {
+    onChange(name, {
+      ...currentValue,
+      [optionName]: {
+        ...currentValue[optionName],
+        op: insertAtIndex(fixOperatorValue(currentValue[optionName].op), index, null)
+      }
+    })
+  }
+
+  const handleRemoveOperator = (optionName, currentValue: IOptions, index: number) => {
+    onChange(name, {
+      ...currentValue,
+      [optionName]: {
+        ...currentValue[optionName],
+        op: fixOperatorValue(currentValue[optionName].op).filter((_op, idx) => idx !== index)
       }
     })
   }
@@ -302,9 +385,13 @@ const Options = ({
     )
   }
 
-  const getTypeAndCanBeNull = (type: IQorusType | IQorusType[], allowed_values: any[]) => {
+  const getTypeAndCanBeNull = (
+    type: IQorusType | IQorusType[],
+    allowed_values?: any[],
+    operatorData?: TOperatorValue
+  ) => {
     let canBeNull = false
-    let realType = getType(type)
+    let realType = getType(type, operators, operatorData)
 
     if (realType?.startsWith('*')) {
       realType = realType.replace('*', '') as IQorusType
@@ -344,7 +431,10 @@ const Options = ({
                 subtle
                 key={optionName}
                 title={optionName}
-                isValid={validateField(getType(type), other.value) && operatorsUrl ? !!other.op : true}
+                isValid={
+                  validateField(getType(type), other.value, { has_to_have_value: true }) &&
+                  (operatorsUrl ? !!other.op : true)
+                }
                 detail={getType(options[optionName].type)}
                 desc={options[optionName].desc}
                 onRemove={
@@ -355,46 +445,93 @@ const Options = ({
                     : undefined
                 }
               >
-                <ReqoreControlGroup fluid>
-                  {size(operators) ? (
-                    <SelectField
-                      defaultItems={map(operators, (operator) => ({
-                        name: operator.name,
-                        desc: operator.desc
-                      }))}
-                      value={other.op && `Operator: ${operators?.[other.op].name}`}
-                      intent={other.op ? 'info' : undefined}
-                      onChange={(_n, val) => {
+                <div>
+                  {operators && size(operators) ? (
+                    <>
+                      <ReqorePanel padded flat rounded customTheme={{ main: '#f7f7f7' }}>
+                        <ReqoreControlGroup fluid>
+                          <ReqoreTag label="Operators: " />
+                          {fixOperatorValue(other.op).map((operator, index) => (
+                            <>
+                              <SelectField
+                                defaultItems={map(operators, (operator) => ({
+                                  name: operator.name,
+                                  desc: operator.desc
+                                }))}
+                                value={operator && `${operators?.[operator].name}`}
+                                onChange={(_n, val) => {
+                                  if (val !== undefined) {
+                                    handleOperatorChange(
+                                      optionName,
+                                      fixedValue,
+                                      findKey(operators, (operator) => operator.name === val) as string,
+                                      index
+                                    )
+                                  }
+                                }}
+                              />
+                              {size(fixOperatorValue(other.op)) > 1 ? (
+                                <ReqoreButton
+                                  icon="DeleteBackLine"
+                                  intent="danger"
+                                  fixed
+                                  onClick={() => handleRemoveOperator(optionName, fixedValue, index)}
+                                />
+                              ) : null}
+                              {operator && operators[operator].supports_nesting ? (
+                                <ReqoreButton
+                                  icon="AddLine"
+                                  intent="info"
+                                  fixed
+                                  onClick={() => handleAddOperator(optionName, fixedValue, index + 1)}
+                                />
+                              ) : null}
+                            </>
+                          ))}
+                        </ReqoreControlGroup>
+                      </ReqorePanel>
+                      <Spacer size={10} />
+                    </>
+                  ) : null}
+                  <ReqorePanel padded flat rounded customTheme={{ main: '#f7f7f7' }}>
+                    <TemplateField
+                      component={AutoField}
+                      {...getTypeAndCanBeNull(type, options[optionName].allowed_values)}
+                      name={optionName}
+                      onChange={(optionName, val) => {
                         if (val !== undefined) {
-                          handleOperatorChange(
+                          handleValueChange(
                             optionName,
                             fixedValue,
-                            findKey(operators, (operator) => operator.name === val)
+                            val,
+                            getTypeAndCanBeNull(type, options[optionName].allowed_values).type
                           )
                         }
                       }}
+                      noSoft={!!rest?.options}
+                      value={other.value}
+                      sensitive={options[optionName].sensitive}
+                      default_value={options[optionName].default_value}
+                      allowed_values={options[optionName].allowed_values}
                     />
+                  </ReqorePanel>
+                  {operators && size(operators) && size(other.op) ? (
+                    <>
+                      <Spacer size={10} />
+                      <ReqorePanel padded flat rounded customTheme={{ main: '#f7f7f7' }}>
+                        <ReqoreTagGroup>
+                          <ReqoreTag label="WHERE" />
+                          <ReqoreTag label={optionName} intent="info" />
+                          <ReqoreTag label="IS" />
+                          {fixOperatorValue(other.op).map((op) => (
+                            <ReqoreTag label={op} intent="info" />
+                          ))}
+                          {other.value ? <ReqoreTag label={other.value?.toString()} intent="success" /> : null}
+                        </ReqoreTagGroup>
+                      </ReqorePanel>
+                    </>
                   ) : null}
-                  <AutoField
-                    {...getTypeAndCanBeNull(type, options[optionName].allowed_values)}
-                    name={optionName}
-                    onChange={(optionName, val) => {
-                      if (val !== undefined) {
-                        handleValueChange(
-                          optionName,
-                          fixedValue,
-                          val,
-                          getTypeAndCanBeNull(type, options[optionName].allowed_values).type
-                        )
-                      }
-                    }}
-                    noSoft={!!rest?.options}
-                    value={other.value}
-                    sensitive={options[optionName].sensitive}
-                    default_value={options[optionName].default_value}
-                    allowed_values={options[optionName].allowed_values}
-                  />
-                </ReqoreControlGroup>
+                </div>
               </SubField>
             </StyledOptionField>
           ) : null

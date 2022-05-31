@@ -323,6 +323,9 @@ const MapperProvider = ({
             desc: data.desc,
             supports_request: data.supports_request,
             supports_read: data.supports_read,
+            supports_update: data.supports_update,
+            supports_create: data.supports_create,
+            supports_delete: data.supports_delete,
             can_manage_fields: record.data?.can_manage_fields,
             path: `${url}/${value}`
               .replace(`${name}`, '')
@@ -388,6 +391,9 @@ const MapperProvider = ({
             type: realProviders[provider].type,
             can_manage_fields: data.can_manage_fields,
             supports_read: data.supports_read,
+            supports_update: data.supports_update,
+            supports_create: data.supports_create,
+            supports_delete: data.supports_delete,
             name,
             subtype: value === 'request' || value === 'response' ? value : undefined,
             path: `${url}/${value}`
@@ -427,6 +433,9 @@ const MapperProvider = ({
               type: realProviders[provider].type,
               name,
               supports_read: data.supports_read,
+              supports_update: data.supports_update,
+              supports_create: data.supports_create,
+              supports_delete: data.supports_delete,
               can_manage_fields: record.data.can_manage_fields,
               path: `${url}/${value}`
                 .replace(`${name}`, '')
@@ -554,7 +563,7 @@ const MapperProvider = ({
               ) : null}
             </>
           ))}
-          {isLoading && <ReqoreButton flat intent="pending" icon="Loader3Line" />}
+          {isLoading && <ReqoreButton flat fixed intent="pending" icon="Loader3Line" />}
           {nodes.length > 0 && (
             <>
               <ReqoreButton

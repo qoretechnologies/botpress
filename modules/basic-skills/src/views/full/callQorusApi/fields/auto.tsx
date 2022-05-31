@@ -1,5 +1,5 @@
-// @ts-nocheck
-import { Button, Callout, ControlGroup } from '@blueprintjs/core'
+import { Callout } from '@blueprintjs/core'
+import { ReqoreButton, ReqoreControlGroup } from '@qoretechnologies/reqore'
 import React, { FunctionComponent, useEffect, useState } from 'react'
 import useMount from 'react-use/lib/useMount'
 import { getTypeFromValue, getValueOrDefaultValue, maybeParseYaml } from '../validator'
@@ -141,7 +141,7 @@ const AutoField: FunctionComponent<any> = ({
       case 'softstring':
       case 'data':
       case 'binary':
-        return <LongStringField fill {...rest} name={name} onChange={handleChange} value={value} type={currentType} />
+        return <StringField fill {...rest} name={name} onChange={handleChange} value={value} type={currentType} />
       case 'bool':
       case 'softbool':
         return <BooleanField fill {...rest} name={name} onChange={handleChange} value={value} type={currentType} />
@@ -169,6 +169,7 @@ const AutoField: FunctionComponent<any> = ({
       case 'softint':
       case 'float':
       case 'softfloat':
+      case 'number':
         return <NumberField {...rest} name={name} onChange={handleChange} value={value} fill type={currentType} />
       case 'option_hash':
         return (
@@ -272,7 +273,8 @@ const AutoField: FunctionComponent<any> = ({
         { name: 'softlist' },
         { name: 'hash' },
         { name: 'int' },
-        { name: 'softint' }
+        { name: 'softint' },
+        { name: 'number' }
       ]
     : [
         { name: 'bool' },
@@ -282,13 +284,14 @@ const AutoField: FunctionComponent<any> = ({
         { name: 'float' },
         { name: 'list' },
         { name: 'hash' },
-        { name: 'int' }
+        { name: 'int' },
+        { name: 'number' }
       ]
 
   // Render type picker if the type is auto or any
   return (
     <>
-      <ControlGroup fill>
+      <ReqoreControlGroup fluid>
         {showPicker && (
           <SelectField
             name="type"
@@ -303,15 +306,17 @@ const AutoField: FunctionComponent<any> = ({
 
         {renderField(currentInternalType)}
         {canBeNull() && (
-          <Button
-            intent={isSetToNull ? 'warning' : 'none'}
-            icon={isSetToNull ? 'cross' : undefined}
+          <ReqoreButton
+            flat
+            fixed
+            intent={isSetToNull ? 'warning' : undefined}
+            icon={isSetToNull ? 'CloseLine' : undefined}
             onClick={handleNullToggle}
           >
             {isSetToNull ? 'Unset null' : 'Set as null'}
-          </Button>
+          </ReqoreButton>
         )}
-      </ControlGroup>
+      </ReqoreControlGroup>
     </>
   )
 }

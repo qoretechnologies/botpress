@@ -1,8 +1,9 @@
-import { Button, Classes, Colors, Icon } from '@blueprintjs/core'
+import { Colors } from '@blueprintjs/core'
+import { ReqoreMessage, ReqorePanel } from '@qoretechnologies/reqore'
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import styled from 'styled-components'
-import HorizontalSpacer from './HorizontalSpacer'
+import Spacer from './Spacer'
 
 export interface ISubFieldProps {
   title?: string
@@ -39,50 +40,33 @@ const StyledSubFieldMarkdown = styled.div`
   p:last-child {
     margin-bottom: 0;
   }
-`
 
-const StyledSubFieldDesc = styled.p`
-  padding: 0;
-  margin: 5px 0 10px 0;
-  font-size: 12px;
-
-  .bp3-icon {
-    margin-right: 3px;
-    vertical-align: text-top;
+  p:first-child {
+    margin-top: 0;
   }
 `
 
 const SubField: React.FC<ISubFieldProps> = ({ title, desc, children, subtle, onRemove, detail, isValid }) => (
   <>
     {title && (
-      <StyledSubFieldTitle subtle={subtle} isValid={isValid}>
-        <div>
-          {!subtle && <Icon icon="dot" iconSize={16} color={isValid === false ? '#bd0000' : undefined} />}
-          <HorizontalSpacer size={5} />
-          <span className="subfield-title">{title}</span>{' '}
-          {detail && (
-            <span className={Classes.TEXT_MUTED}>
-              {'<'}
-              {detail}
-              {'>'}
-            </span>
-          )}
-        </div>
-        {onRemove ? (
-          <Button style={{ verticalAlign: 'sub' }} minimal icon="trash" onClick={onRemove} intent="danger" small />
-        ) : (
-          ''
+      <ReqorePanel
+        flat
+        padded
+        rounded
+        label={title}
+        actions={[{ label: `<${detail} />` }, { onClick: onRemove, icon: 'DeleteBin6Line', intent: 'danger' }]}
+      >
+        {desc && (
+          <ReqoreMessage intent="info" inverted size="small" flat>
+            <StyledSubFieldMarkdown>
+              <ReactMarkdown>{desc}</ReactMarkdown>
+            </StyledSubFieldMarkdown>
+          </ReqoreMessage>
         )}
-      </StyledSubFieldTitle>
+        {desc && <Spacer size={10} />}
+        {children}
+      </ReqorePanel>
     )}
-    {desc && (
-      <blockquote className={`bp3-blockquote ${Classes.TEXT_MUTED}`}>
-        <StyledSubFieldMarkdown>
-          <ReactMarkdown>{desc}</ReactMarkdown>
-        </StyledSubFieldMarkdown>
-      </blockquote>
-    )}
-    {children}
   </>
 )
 

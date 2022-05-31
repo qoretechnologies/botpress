@@ -175,7 +175,7 @@ const SelectField = ({
                     rightIcon: 'WindowFill',
                     onClick: () => setSelectDialogOpen(true),
                     disabled,
-                    intent
+                    intent: value ? 'info' : undefined
                   } as IReqoreButtonProps
                 }
               >
@@ -247,11 +247,12 @@ const SelectField = ({
               label={value ? value : placeholder || t('Please select')}
               closeOnOutsideClick
               filterable
+              caretPosition="right"
               componentProps={
                 {
                   disabled,
                   flat: true,
-                  intent
+                  intent: value ? 'info' : undefined
                 } as IReqoreButtonProps
               }
             />

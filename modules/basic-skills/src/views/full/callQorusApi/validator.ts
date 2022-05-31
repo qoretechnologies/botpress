@@ -1,4 +1,5 @@
 import { isDateValid } from '@blueprintjs/datetime/lib/esm/common/dateUtils'
+import cron from 'cron-validator'
 import jsyaml from 'js-yaml'
 import every from 'lodash/every'
 import isArray from 'lodash/isArray'
@@ -9,9 +10,8 @@ import size from 'lodash/size'
 import uniqWith from 'lodash/uniqWith'
 import { isBoolean, isNull, isString, isUndefined } from 'util'
 import { maybeBuildOptionProvider } from './fields/dataProvider'
-import { TOption } from './fields/systemOptions'
-
-const cron = require('cron-validator')
+import { fixOperatorValue, IOptions, TOption } from './fields/systemOptions'
+import { getTemplateKey, getTemplateValue, isValueTemplate } from './fields/template'
 
 export const validateField: (type: string, value: any, field?: any, canBeNull?: boolean) => boolean = (
   type,
@@ -40,6 +40,11 @@ export const validateField: (type: string, value: any, field?: any, canBeNull?: 
     // Get the type from start to the position of the `<`
     type = type.slice(0, pos)
   }
+  // Check if the value is a template string
+  if (isValueTemplate(value)) {
+    // Check if the template has both the key and value
+    return !!getTemplateKey(value) && !!getTemplateValue(value)
+  }
   // Check individual types
   switch (type) {
     case 'binary':
@@ -64,6 +69,10 @@ export const validateField: (type: string, value: any, field?: any, canBeNull?: 
       // Check if this field has to be a valid identifier
       if (field?.has_to_be_valid_identifier) {
         isValid = !value.match(/^[0-9]|\W/)
+      }
+
+      if (field?.has_to_have_value) {
+        isValid = value !== '' && value.length !== 0
       }
 
       // Strings cannot be empty
@@ -176,6 +185,10 @@ export const validateField: (type: string, value: any, field?: any, canBeNull?: 
     case 'data-provider':
     case 'api-call':
     case 'search-single':
+    case 'search':
+    case 'update':
+    case 'delete':
+    case 'create':
       let newValue = maybeBuildOptionProvider(value)
 
       if (!newValue) {
@@ -197,8 +210,15 @@ export const validateField: (type: string, value: any, field?: any, canBeNull?: 
       }
 
       if (
-        type === 'search-single' &&
+        (type === 'search-single' || type === 'search') &&
         (size(value.search_args) === 0 || !validateField('system-options-with-operators', value.search_args))
+      ) {
+        return false
+      }
+
+      if (
+        (type === 'update' || type === 'create') &&
+        (size(value[`${type}_args`]) === 0 || !validateField('system-options', value[`${type}_args`]))
       ) {
         return false
       }
@@ -268,41 +288,60 @@ export const validateField: (type: string, value: any, field?: any, canBeNull?: 
     case 'pipeline-options':
     case 'mapper-options':
     case 'system-options': {
-      if (!value || size(value) === 0) {
-        if (canBeNull) {
-          return true
+      const isValid = (val) => {
+        if (!val || size(val) === 0) {
+          if (canBeNull) {
+            return true
+          }
+
+          return false
         }
 
-        return false
-      }
-
-      return every(value, (optionData) =>
-        typeof optionData !== 'object'
-          ? validateField(getTypeFromValue(optionData), optionData)
-          : validateField(optionData.type, optionData.value)
-      )
-    }
-    case 'system-options-with-operators': {
-      if (!value || size(value) === 0) {
-        if (canBeNull) {
-          return true
-        }
-
-        return false
-      }
-
-      return every(value, (optionData: TOption) => {
-        let isValid: boolean =
+        return every(val, (optionData) =>
           typeof optionData !== 'object'
             ? validateField(getTypeFromValue(optionData), optionData)
             : validateField(optionData.type, optionData.value)
+        )
+      }
 
-        if (!optionData.op) {
-          isValid = false
+      if (isArray(value)) {
+        return value.every(isValid)
+      }
+
+      return isValid(value)
+    }
+    case 'system-options-with-operators': {
+      const isValid = (val: IOptions) => {
+        if (!val || size(val) === 0) {
+          if (canBeNull) {
+            return true
+          }
+
+          return false
         }
 
-        return isValid
-      })
+        return every(val, (optionData: TOption) => {
+          let isValid: boolean =
+            typeof optionData !== 'object'
+              ? validateField(getTypeFromValue(optionData), optionData)
+              : validateField(optionData.type, optionData.value)
+
+          if (
+            !optionData.op ||
+            !fixOperatorValue(optionData.op).every((operator) => validateField('string', operator))
+          ) {
+            isValid = false
+          }
+
+          return isValid
+        })
+      }
+
+      if (isArray(value)) {
+        return value.every(isValid)
+      }
+
+      return isValid(value)
     }
     case 'nothing':
       return false

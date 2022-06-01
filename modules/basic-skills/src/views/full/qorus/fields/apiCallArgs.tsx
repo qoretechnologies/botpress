@@ -13,7 +13,7 @@ type IApiCallArgsField = {
   url: string
 }
 
-export const StyledPairField = styled.div`
+export const StyledPairField: any = styled.div`
   margin-bottom: 10px;
 `
 

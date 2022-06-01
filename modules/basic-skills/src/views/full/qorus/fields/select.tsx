@@ -117,7 +117,7 @@ const SelectField = ({
       return
     }
     // Set the selected item
-    onChange(name, item.name)
+    onChange(name, item.value || item.name)
   }
 
   let filteredItems: any[] = items

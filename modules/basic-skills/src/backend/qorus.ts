@@ -24,6 +24,14 @@ const createNodes = (data) => {
     {}
   )
 
+  const skillTypeToUrl = {
+    apicall: 'callApiFromUi',
+    search: 'searchRecordsFromUi',
+    create: 'createRecordsFromUi',
+    update: 'updateRecordsFromUi',
+    delete: 'deleteRecordsFromUi'
+  }
+
   const nodes: sdk.SkillFlowNode[] = [
     {
       name: 'entry',
@@ -32,7 +40,7 @@ const createNodes = (data) => {
           type: sdk.NodeActionType.RunAction,
           name: 'basic-skills/call_api',
           args: {
-            url: `${getUrl()}dataprovider/callApiFromUi`,
+            url: `${getUrl()}dataprovider/${skillTypeToUrl[data.skillType]}`,
             method: 'POST',
             randomId: data.randomId,
             /* A way to pass data to the action. */

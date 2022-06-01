@@ -25,9 +25,10 @@
     "@babel/helpers": "^7.4.3",
     "@previewjs/plugin-react": "^3.1.2",
     "@types/nodemailer": "^6.2.1",
-    "@types/react": "17.0.1",
+    "@types/react": "16.8.6",
     "@types/react-bootstrap": "^0.32.20",
-    "@types/reactstrap": "^8.4.1"
+    "@types/reactstrap": "^8.4.1",
+    "@types/styled-components": "^5.1.25"
   },
   "dependencies": {
     "@qoretechnologies/reqore": "^0.19.13",
@@ -37,8 +38,8 @@
     "lodash": "^4.17.19",
     "nanoid": "^3.1.31",
     "nodemailer": "^6.6.1",
-    "react": "17.0.1",
-    "react-dom": "17.0.1",
+    "react": "16.8",
+    "react-dom": "16.8",
     "react-markdown": "^8.0.3",
     "react-use": "^17.3.2",
     "styled-components": "^5.3.5",

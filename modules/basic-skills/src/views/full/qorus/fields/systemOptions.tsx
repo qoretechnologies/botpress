@@ -127,7 +127,7 @@ export type TOperatorValue = string | string[] | undefined | null
 export type TOption = {
   type: IQorusType
   value: any
-  op?: string
+  op?: string[]
 }
 export type IOptions =
   | {
@@ -420,6 +420,8 @@ const Options = ({
     },
     {}
   )
+
+  console.log(operators)
 
   return (
     <>

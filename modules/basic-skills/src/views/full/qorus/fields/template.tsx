@@ -100,13 +100,17 @@ export const TemplateField = ({ value, name, onChange, component: Comp, ...rest 
         }
       ]}
       onTabChange={(newTabId: string): void => {
+        const currentTab = isTemplate ? 'template' : 'custom'
+
         if (newTabId === 'custom') {
           setIsTemplate(false)
           setTemplateKey(null)
           setTemplateValue(null)
-          onChange(name, null)
         } else {
           setIsTemplate(true)
+        }
+
+        if (currentTab !== newTabId) {
           onChange(name, null)
         }
       }}

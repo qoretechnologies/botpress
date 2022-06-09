@@ -196,8 +196,6 @@ const Options = ({
         // Fetch the options for this mapper type
         const data = await fetchData(getUrl())
 
-        console.log(data)
-
         if (data.error) {
           setLoading(false)
           setOptions(undefined)
@@ -291,7 +289,7 @@ const Options = ({
           ...currentValue,
           [optionName]: {
             type,
-            value: val,
+            value: val || currentValue[optionName]?.value,
             op: defaultOperators
           }
         })
@@ -420,8 +418,6 @@ const Options = ({
     },
     {}
   )
-
-  console.log(operators)
 
   return (
     <>

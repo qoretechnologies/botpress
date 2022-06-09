@@ -1,4 +1,5 @@
 import { ReqoreMessage, ReqorePanel } from '@qoretechnologies/reqore'
+import { IReqorePanelAction } from '@qoretechnologies/reqore/dist/components/Panel'
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import styled from 'styled-components'
@@ -26,28 +27,39 @@ export const StyledSubFieldMarkdown: any = styled.div`
   }
 `
 
-const SubField: React.FC<ISubFieldProps> = ({ title, desc, children, subtle, onRemove, detail, isValid }) => (
-  <>
-    {title && (
-      <ReqorePanel
-        flat
-        padded
-        rounded
-        label={title}
-        actions={[{ label: `<${detail} />` }, { onClick: onRemove, icon: 'DeleteBin6Line', intent: 'danger' }]}
-      >
-        {desc && (
-          <ReqoreMessage intent="info" inverted size="small" flat>
-            <StyledSubFieldMarkdown>
-              <ReactMarkdown>{desc}</ReactMarkdown>
-            </StyledSubFieldMarkdown>
-          </ReqoreMessage>
-        )}
-        {desc && <Spacer size={10} />}
-        {children}
-      </ReqorePanel>
-    )}
-  </>
-)
+const SubField: React.FC<ISubFieldProps> = ({ title, desc, children, subtle, onRemove, detail, isValid }) => {
+  let actions: IReqorePanelAction[] = [{ onClick: onRemove, icon: 'DeleteBin6Line', intent: 'danger' }]
+
+  if (detail) {
+    actions.push({ label: `<${detail} />` })
+  }
+
+  return (
+    <>
+      {title && (
+        <ReqorePanel
+          flat
+          padded
+          rounded
+          label={title}
+          actions={actions}
+          intent={isValid === false ? 'danger' : undefined}
+        >
+          {desc && (
+            <ReqorePanel flat rounded padded>
+              <ReqoreMessage intent="muted" inverted size="small" flat>
+                <StyledSubFieldMarkdown>
+                  <ReactMarkdown>{desc}</ReactMarkdown>
+                </StyledSubFieldMarkdown>
+              </ReqoreMessage>
+            </ReqorePanel>
+          )}
+          {desc && <Spacer size={10} />}
+          {children}
+        </ReqorePanel>
+      )}
+    </>
+  )
+}
 
 export default SubField

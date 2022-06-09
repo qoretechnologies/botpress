@@ -40,8 +40,6 @@ const LongStringField: FunctionComponent<ILongStringField & any> = ({
     onChange(name, event.target.value)
   }
 
-  console.log('LONG STRING VALUE', value || default_value)
-
   return (
     <ReqoreTextarea
       style={{

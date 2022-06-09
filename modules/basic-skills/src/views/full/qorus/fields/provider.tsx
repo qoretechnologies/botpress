@@ -504,7 +504,6 @@ const MapperProvider = ({
             disabled={isLoading}
             defaultItems={getDefaultItems}
             onChange={(_name, value) => {
-              console.log('VALUE', value)
               handleProviderChange(value)
             }}
             value={provider}

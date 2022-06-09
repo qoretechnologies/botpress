@@ -32,8 +32,6 @@ export const ApiCallArgs = ({ url, onChange, value }: IApiCallArgsField) => {
     return data.data
   }, [url])
 
-  console.log(schema)
-
   useEffect(() => {
     if (schema?.type === 'nothing') {
       onChange('apicallargs', undefined, 'nothing')

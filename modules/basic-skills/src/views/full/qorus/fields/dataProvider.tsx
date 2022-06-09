@@ -170,7 +170,6 @@ export const maybeBuildOptionProvider = (provider: IProviderType | string): IPro
   }
   // split the provider by /
   const [type, name, ...path] = provider.split('/')
-  console.log(type, name, path)
   // Return it
   return {
     type,
@@ -428,7 +427,7 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
 }
 
 const PreviewProvider = (props: IConnectorFieldProps) => {
-  const [value, setValue] = useState<IProviderType | string>({
+  const [value, setValue] = useState<IProviderType>({
     type: 'datasource',
     name: 'omquser',
     supports_read: true,
@@ -445,9 +444,16 @@ const PreviewProvider = (props: IConnectorFieldProps) => {
     }
   })
 
-  console.log(value)
-
-  return <ConnectorField {...props} value={value} onChange={(_name, val) => setValue(val)} />
+  return (
+    <ConnectorField
+      {...props}
+      value={{
+        ...value,
+        ...((props?.value as IProviderType) || {})
+      }}
+      onChange={(_name, val) => setValue(val)}
+    />
+  )
 }
 
 setupPreviews(PreviewProvider, {
@@ -458,7 +464,15 @@ setupPreviews(PreviewProvider, {
   },
   Search: {
     name: 'Search',
-    value: undefined,
+    value: {
+      search_args: {
+        remote_id: {
+          type: 'string',
+          op: ['='],
+          value: '123'
+        }
+      }
+    },
     recordType: 'search'
   },
   Update: {

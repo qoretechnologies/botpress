@@ -10,12 +10,12 @@ import DataProvider, { IProviderType } from './fields/dataProvider'
 import SelectField from './fields/select'
 import { validateField } from './validator'
 
-export type TSkillType = 'apicall' | 'search' | 'create' | 'update' | 'delete'
+export type TSkillType = 'api-call' | 'search' | 'create' | 'update' | 'delete'
 
 const Skills = {
-  apicall: {
+  'api-call': {
     name: 'API Call',
-    value: 'apicall',
+    value: 'api-call',
     desc: 'Make an API call to a third party service'
   },
   search: {
@@ -44,23 +44,17 @@ export const Qorus = ({ onValidChanged, onDataChanged, initialData }) => {
   const [provider, setProvider] = useState<IProviderType | string>(initialData?.provider)
   const [skillType, setSkillType] = useState<TSkillType>(initialData?.skillType)
 
-  console.log(provider)
-
   useEffect(() => {
     // Check if the provider is valid
-    const isValid = validateField('type-selector', provider)
+    const isValid = validateField(skillType, provider)
+    console.log(isValid)
     // This call enabled / disables the submit button
     onValidChanged?.(isValid)
     // Save the data if they are valid
     if (isValid) {
       onDataChanged?.({ randomId: Date.now(), provider, skillType })
     }
-  }, [provider])
-
-  useEffect(() => {
-    setProvider(null)
-    onValidChanged?.(false)
-  }, [skillType])
+  }, [provider, skillType])
 
   return (
     <div className={style.modalContent} style={{ backgroundColor: '#ffffff', minHeight: '60vh' }}>
@@ -69,7 +63,11 @@ export const Qorus = ({ onValidChanged, onDataChanged, initialData }) => {
           <SelectField
             defaultItems={map(Skills, (skill, key) => skill)}
             value={Skills[skillType]?.name}
-            onChange={(n, v) => setSkillType(v)}
+            onChange={(n, v) => {
+              setProvider(null)
+              onValidChanged?.(false)
+              setSkillType(v)
+            }}
           />
           {skillType && (
             <ReqoreMessage intent="info" inverted size="small" flat>
@@ -82,11 +80,12 @@ export const Qorus = ({ onValidChanged, onDataChanged, initialData }) => {
         <Spacer size={10} />
         {skillType && (
           <DataProvider
+            key={skillType}
             name="test"
             value={provider}
             onChange={(n, v) => setProvider(v)}
-            requiresRequest={skillType === 'apicall'}
-            recordType={skillType === 'apicall' ? undefined : skillType}
+            requiresRequest={skillType === 'api-call'}
+            recordType={skillType === 'api-call' ? undefined : skillType}
           />
         )}
       </ReqoreUIProvider>

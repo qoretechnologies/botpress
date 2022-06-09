@@ -4,8 +4,6 @@ export const fetchData = async (
   url: string,
   method: 'GET' | 'POST' | 'PUT' = 'GET'
 ): Promise<{ data?: any; error?: string }> => {
-  console.log(window)
-
   const realUrl = `${getUrl()}${url}`
 
   try {

@@ -102,7 +102,6 @@ const SelectField = ({
   const [isSelectDialogOpen, setSelectDialogOpen] = useState<boolean>(false)
 
   useEffect(() => {
-    console.log(defaultItems)
     if (defaultItems) {
       setItems(defaultItems)
     }
@@ -246,7 +245,7 @@ const SelectField = ({
               }))}
               label={value ? value : placeholder || t('Please select')}
               closeOnOutsideClick
-              filterable
+              filterable={false}
               caretPosition="right"
               componentProps={
                 {

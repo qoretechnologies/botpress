@@ -299,8 +299,8 @@ export const validateField: (type: string, value: any, field?: any, canBeNull?: 
 
         return every(val, (optionData) =>
           typeof optionData !== 'object'
-            ? validateField(getTypeFromValue(optionData), optionData)
-            : validateField(optionData.type, optionData.value)
+            ? validateField(getTypeFromValue(optionData), optionData, { has_to_have_value: true })
+            : validateField(optionData.type, optionData.value, { has_to_have_value: true })
         )
       }
 
@@ -323,8 +323,8 @@ export const validateField: (type: string, value: any, field?: any, canBeNull?: 
         return every(val, (optionData: TOption) => {
           let isValid: boolean =
             typeof optionData !== 'object'
-              ? validateField(getTypeFromValue(optionData), optionData)
-              : validateField(optionData.type, optionData.value)
+              ? validateField(getTypeFromValue(optionData), optionData, { has_to_have_value: true })
+              : validateField(optionData.type, optionData.value, { has_to_have_value: true })
 
           if (
             !optionData.op ||

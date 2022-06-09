@@ -16,13 +16,15 @@ const generateFlow = async (data: any, metadata: sdk.FlowGeneratorMetadata): Pro
 
 const createNodes = (data) => {
   /* It's a way to flatten the args object. */
-  data.provider.args = reduce(
-    data.provider.args.value,
-    (acc, val, key) => {
-      return { ...acc, [key]: val }
-    },
-    {}
-  )
+  if (data?.provider?.args?.value) {
+    data.provider.args = reduce(
+      data.provider.args.value,
+      (acc, val, key) => {
+        return { ...acc, [key]: val }
+      },
+      {}
+    )
+  }
 
   const skillTypeToUrl = {
     apicall: 'callApiFromUi',

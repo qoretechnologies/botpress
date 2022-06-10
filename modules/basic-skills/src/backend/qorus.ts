@@ -1,5 +1,5 @@
 import * as sdk from 'botpress/sdk'
-import { omit, reduce } from 'lodash'
+import { cloneDeep, omit, reduce } from 'lodash'
 import { getUrl } from './utils'
 
 const generateFlow = async (data: any, metadata: sdk.FlowGeneratorMetadata): Promise<sdk.FlowGenerationResult> => {
@@ -14,10 +14,12 @@ const generateFlow = async (data: any, metadata: sdk.FlowGeneratorMetadata): Pro
   }
 }
 
-const createNodes = (data) => {
+const createNodes = (data: { provider: any; skillType: string; randomId: string | number }) => {
+  const newProvider = cloneDeep(data.provider)
+
   /* It's a way to flatten the args object. */
   if (data?.provider?.args?.value) {
-    data.provider.args = reduce(
+    newProvider.args = reduce(
       data.provider.args.value,
       (acc, val, key) => {
         return { ...acc, [key]: val }
@@ -34,6 +36,18 @@ const createNodes = (data) => {
     delete: 'deleteRecordsFromUi'
   }
 
+  if (data.provider?.create_args) {
+    newProvider.records = data.provider.create_args
+  }
+
+  if (data.provider?.update_args) {
+    newProvider.set = data.provider.update_args
+  }
+
+  if (data.provider?.delete_args || data.provider?.search_args) {
+    newProvider.where = data.provider.delete_args || data.provider.search_args
+  }
+
   const nodes: sdk.SkillFlowNode[] = [
     {
       name: 'entry',
@@ -46,7 +60,17 @@ const createNodes = (data) => {
             method: 'POST',
             randomId: data.randomId,
             /* A way to pass data to the action. */
-            body: omit(data.provider, ['is_api_call', 'desc', 'use_args', 'supports_request']),
+            body: omit(newProvider, [
+              'is_api_call',
+              'desc',
+              'use_args',
+              'create_args',
+              'update_args',
+              'delete_args',
+              'supports_request'
+            ]),
+            memory: 'temp',
+            variable: 'response',
             headers: {
               Accept: 'application/json',
               Authorization: `Basic ${Buffer.from('fwitosz:fwitosz42').toString('base64')}`

@@ -1,4 +1,3 @@
-import { Classes } from '@blueprintjs/core'
 import { ReqoreTextarea } from '@qoretechnologies/reqore'
 import React, { ChangeEvent, FunctionComponent } from 'react'
 import useMount from 'react-use/lib/useMount'
@@ -49,7 +48,7 @@ const LongStringField: FunctionComponent<ILongStringField & any> = ({
       }}
       placeholder={placeholder}
       scaleWithContent
-      className={fill && Classes.FILL}
+      fluid={fill}
       value={!value ? default_value || '' : value}
       onChange={handleInputChange}
     />

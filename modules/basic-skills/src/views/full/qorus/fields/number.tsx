@@ -1,5 +1,4 @@
 // @ts-nocheck
-import { Classes } from '@blueprintjs/core'
 import { setupPreviews } from '@previewjs/plugin-react/setup'
 import { ReqoreInput } from '@qoretechnologies/reqore'
 import React, { ChangeEvent, FunctionComponent } from 'react'
@@ -24,7 +23,7 @@ const NumberField: FunctionComponent<INumberField & any> = ({ name, onChange, va
 
   return (
     <ReqoreInput
-      className={fill && Classes.FILL}
+      fluid={fill}
       value={value ?? default_value ?? ''}
       onChange={handleInputChange}
       onClearClick={handleResetClick}

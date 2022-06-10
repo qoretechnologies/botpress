@@ -100,10 +100,10 @@ export const RecordQueryArgs = ({ value, url, onChange, type, hasOperators, asLi
       onChange={onChange}
       name="search_args"
       value={value as IOptions}
-      operatorsUrl={`${url}/search_operators?context=ui`}
+      operatorsUrl={hasOperators ? `${url}/search_operators?context=ui` : undefined}
       options={transformedOptions}
-      placeholder={t('Add search argument')}
-      noValueString={t('No search arguments added yet. At least 1 search arg is required.')}
+      placeholder={t('Add argument')}
+      noValueString={t('No arguments added yet. At least 1 search arg is required.')}
     />
   )
 }

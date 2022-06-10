@@ -1,6 +1,6 @@
 import { ReqoreMessage, ReqorePanel } from '@qoretechnologies/reqore'
 import { IReqorePanelAction } from '@qoretechnologies/reqore/dist/components/Panel'
-import React from 'react'
+import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import styled from 'styled-components'
 import Spacer from './Spacer'
@@ -27,11 +27,17 @@ export const StyledSubFieldMarkdown: any = styled.div`
   }
 `
 
-const SubField: React.FC<ISubFieldProps> = ({ title, desc, children, subtle, onRemove, detail, isValid }) => {
-  let actions: IReqorePanelAction[] = [{ onClick: onRemove, icon: 'DeleteBin6Line', intent: 'danger' }]
+const SubField: React.FC<any> = ({ title, desc, children, subtle, onRemove, detail, isValid, defaultShowInfo }) => {
+  const [showInfo, setShowInfo] = useState<boolean>(defaultShowInfo)
 
-  if (detail) {
-    actions.push({ label: `<${detail} />` })
+  let actions: IReqorePanelAction[] = [{ onClick: onRemove, icon: 'DeleteBin6Line' }]
+
+  if (desc || detail) {
+    actions.unshift({
+      onClick: () => setShowInfo(!showInfo),
+      icon: showInfo ? 'InformationFill' : 'InformationLine',
+      intent: showInfo ? 'info' : undefined
+    })
   }
 
   return (
@@ -44,17 +50,21 @@ const SubField: React.FC<ISubFieldProps> = ({ title, desc, children, subtle, onR
           label={title}
           actions={actions}
           intent={isValid === false ? 'danger' : undefined}
+          collapsible
+          unMountContentOnCollapse={false}
         >
-          {desc && (
-            <ReqorePanel flat rounded padded>
-              <ReqoreMessage intent="muted" inverted size="small" flat>
-                <StyledSubFieldMarkdown>
-                  <ReactMarkdown>{desc}</ReactMarkdown>
-                </StyledSubFieldMarkdown>
-              </ReqoreMessage>
-            </ReqorePanel>
-          )}
-          {desc && <Spacer size={10} />}
+          {showInfo && (desc || detail) ? (
+            <>
+              <ReqorePanel flat rounded padded>
+                <ReqoreMessage intent="muted" inverted size="small" flat title={detail ? `<${detail} />` : undefined}>
+                  <StyledSubFieldMarkdown>
+                    <ReactMarkdown>{desc}</ReactMarkdown>
+                  </StyledSubFieldMarkdown>
+                </ReqoreMessage>
+              </ReqorePanel>
+              <Spacer size={10} />
+            </>
+          ) : null}
           {children}
         </ReqorePanel>
       )}

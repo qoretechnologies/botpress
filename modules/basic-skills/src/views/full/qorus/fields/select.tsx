@@ -136,7 +136,7 @@ const SelectField = ({
   }
 
   const hasItemsWithDesc = (data) => {
-    return data.some((item) => item.desc)
+    return data.some((item) => getItemDescription(data.name))
   }
 
   if (!filteredItems || filteredItems.length === 0) {
@@ -148,7 +148,7 @@ const SelectField = ({
   }
 
   const getItemDescription = (itemName) => {
-    return items.find((item) => item.name === itemName)?.desc
+    return items.find((item) => item.name === itemName)?.desc || 'No description'
   }
 
   return (

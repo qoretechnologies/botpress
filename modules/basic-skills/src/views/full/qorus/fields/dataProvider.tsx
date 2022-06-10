@@ -1,15 +1,16 @@
 import { setupPreviews } from '@previewjs/plugin-react/setup'
-import { ReqoreMessage, ReqorePanel } from '@qoretechnologies/reqore'
-import { capitalize, cloneDeep, isEqual, map, reduce } from 'lodash'
+import { ReqoreMessage, ReqorePanel, ReqoreTag, ReqoreTagGroup } from '@qoretechnologies/reqore'
+import { capitalize, cloneDeep, isEqual, last, map, reduce } from 'lodash'
 import size from 'lodash/size'
 import React, { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useDebounce } from 'react-use'
 import Spacer from '../components/Spacer'
+import { validateField } from '../validator'
 import { ApiCallArgs } from './apiCallArgs'
 import Provider, { providers } from './provider'
 import { RecordQueryArgs } from './searchArgs'
-import Options, { IOptions } from './systemOptions'
+import Options, { fixOperatorValue, IOptions, TOption } from './systemOptions'
 
 export type TRecordType = 'search' | 'search-single' | 'create' | 'update' | 'delete'
 export type TRealRecordType = 'read' | 'create' | 'update' | 'delete'
@@ -319,109 +320,184 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
             </div>
           </ReqoreMessage>
         )}
-      </ReqorePanel>
-      <Spacer size={15} />
-      {provider === 'factory' && optionProvider ? (
-        <>
-          <ReqorePanel collapsible label="Factory options" padded rounded>
-            <Options
-              onChange={(nm, val) => {
-                setOptionProvider((cur) => ({
-                  ...cur,
-                  options: val,
-                  optionsChanged: !isEqual(optionProvider.options, val)
-                }))
-              }}
-              name="options"
-              value={optionProvider.options}
-              customUrl={`${getUrlFromProvider(optionProvider, true)}`}
-            />
-          </ReqorePanel>
-          <Spacer size={15} />
-        </>
-      ) : null}
-      {/* This means that we are working with an API Call provider */}
-      {requiresRequest && optionProvider?.supports_request ? (
-        <>
-          <ReqorePanel label="Allow API arguments" unMountContentOnCollapse rounded padded>
-            <ApiCallArgs
-              value={optionProvider?.args?.value}
-              url={`${getUrlFromProvider(optionProvider)}`}
-              onChange={(_nm, value, type) => {
-                setOptionProvider((cur) => ({
-                  ...cur,
-                  args: {
-                    type,
-                    value
-                  }
-                }))
-              }}
-            />
-          </ReqorePanel>
-        </>
-      ) : null}
-      {/* This means that we are working with a record search */}
-      {recordType && optionProvider && shouldShowSearchArguments(recordType, optionProvider) ? (
-        <>
-          <ReqorePanel collapsible label="Search arguments" padded rounded>
+        {provider === 'factory' && optionProvider ? (
+          <>
+            <ReqorePanel collapsible label="Factory options" padded rounded>
+              <Options
+                onChange={(nm, val) => {
+                  setOptionProvider((cur) => ({
+                    ...cur,
+                    options: val,
+                    optionsChanged: !isEqual(optionProvider.options, val)
+                  }))
+                }}
+                name="options"
+                value={optionProvider.options}
+                customUrl={`${getUrlFromProvider(optionProvider, true)}`}
+              />
+            </ReqorePanel>
+            <Spacer size={15} />
+          </>
+        ) : null}
+        {/* This means that we are working with an API Call provider */}
+        {requiresRequest && optionProvider?.supports_request ? (
+          <>
+            <ReqorePanel label="Allow API arguments" unMountContentOnCollapse rounded padded>
+              <ApiCallArgs
+                value={optionProvider?.args?.value}
+                url={`${getUrlFromProvider(optionProvider)}`}
+                onChange={(_nm, value, type) => {
+                  setOptionProvider((cur) => ({
+                    ...cur,
+                    args: {
+                      type,
+                      value
+                    }
+                  }))
+                }}
+              />
+            </ReqorePanel>
+          </>
+        ) : null}
+        {/* This means that we are working with a record update */}
+        {recordType && optionProvider && supportsArguments[recordType] ? (
+          <ReqorePanel collapsible label={`${capitalize(recordType)} options`} padded rounded>
             <RecordQueryArgs
-              type="search"
+              type={recordType}
+              asList={supportsList[recordType]}
               url={getUrlFromProvider(optionProvider, false, true)}
-              value={optionProvider?.search_args as IOptions}
-              onChange={(nm, val) => {
+              value={optionProvider?.[`${recordType}_args`]}
+              onChange={(_nm, val) => {
                 setOptionProvider((cur: IProviderType | null) => {
                   const result: IProviderType = {
                     ...cur,
-                    search_args: val
+                    [`${recordType}_args`]: val
                   } as IProviderType
 
                   return result
                 })
               }}
+              hasOperators={supportsOperators[recordType] || false}
             />
           </ReqorePanel>
-          <Spacer size={15} />
-          <ReqorePanel collapsible label="Search options" padded rounded>
-            <Options
-              onChange={(nm, val) => {
-                setOptionProvider((cur: IProviderType | null) => {
-                  const result: IProviderType = {
-                    ...cur,
-                    search_options: val
-                  } as IProviderType
+        ) : null}
+        {/* This means that we are working with a record search */}
+        {recordType && optionProvider && shouldShowSearchArguments(recordType, optionProvider) ? (
+          <>
+            <Spacer size={15} />
+            <ReqorePanel collapsible label="Search arguments" padded rounded>
+              <RecordQueryArgs
+                type="search"
+                hasOperators
+                url={getUrlFromProvider(optionProvider, false, true)}
+                value={optionProvider?.search_args as IOptions}
+                onChange={(nm, val) => {
+                  setOptionProvider((cur: IProviderType | null) => {
+                    const result: IProviderType = {
+                      ...cur,
+                      search_args: val
+                    } as IProviderType
 
-                  return result
-                })
-              }}
-              name="search_options"
-              value={optionProvider.search_options}
-              customUrl={`${getUrlFromProvider(optionProvider, false, true)}/search_options`}
-            />
+                    return result
+                  })
+                }}
+              />
+            </ReqorePanel>
+            <Spacer size={15} />
+            <ReqorePanel collapsible label="Search options" padded rounded unMountContentOnCollapse={false}>
+              <Options
+                onChange={(nm, val) => {
+                  setOptionProvider((cur: IProviderType | null) => {
+                    const result: IProviderType = {
+                      ...cur,
+                      search_options: val
+                    } as IProviderType
+
+                    return result
+                  })
+                }}
+                name="search_options"
+                value={optionProvider.search_options}
+                customUrl={`${getUrlFromProvider(optionProvider, false, true)}/search_options`}
+              />
+            </ReqorePanel>
+            <Spacer size={15} />
+          </>
+        ) : null}
+        {recordType && validateField(recordType, optionProvider) ? (
+          <ReqorePanel padded flat rounded customTheme={{ main: '#f7f7f7' }}>
+            <ReqoreTagGroup size="small">
+              <>
+                {recordType === 'delete' && (
+                  <>
+                    <ReqoreTag label="DELETE FROM" />
+                    <ReqoreTag label={last(optionProvider.path.split('/'))} color="#f1ca00" />
+                  </>
+                )}
+                {optionProvider?.create_args && (
+                  <>
+                    <ReqoreTag label="INSERT INTO" />
+                    <ReqoreTag label={last(optionProvider.path.split('/'))} color="#f1ca00" />
+                    {(optionProvider.create_args as IOptions[]).map((createArgs) => (
+                      <>
+                        {map<IOptions>(createArgs as any, (option: TOption, optionName: string) => ({
+                          option,
+                          optionName
+                        })).map(({ optionName }: any, index) => (
+                          <>
+                            <ReqoreTag label={optionName} intent="info" />
+                          </>
+                        ))}
+                        <ReqoreTag label="VALUES" />
+                        {map<IOptions>(createArgs as any, (option: TOption, optionName: string) => ({
+                          option,
+                          optionName
+                        })).map(({ option }: any, index) => (
+                          <>{option.value ? <ReqoreTag label={option.value?.toString()} intent="success" /> : null}</>
+                        ))}
+                      </>
+                    ))}
+                  </>
+                )}
+                {optionProvider?.update_args && (
+                  <>
+                    <ReqoreTag label="UPDATE" />
+                    <ReqoreTag label={last(optionProvider.path.split('/'))} color="#f1ca00" />
+                    <ReqoreTag label="SET" />
+                    {/* @ts-expect-error */}
+                    {map<IOptions>(optionProvider.update_args as IOptions, (option: TOption, optionName: string) => (
+                      <>
+                        <ReqoreTag label={optionName} intent="info" />
+                        <ReqoreTag label="=" />
+                        {option.value ? <ReqoreTag label={option.value?.toString()} intent="success" /> : null}
+                      </>
+                    ))}
+                  </>
+                )}
+                {optionProvider?.search_args && (
+                  <>
+                    <ReqoreTag label="WHERE" />
+                    {/* @ts-expect-error */}
+                    {map<IOptions>(optionProvider.search_args as IOptions, (option: TOption, optionName: string) => ({
+                      option,
+                      optionName
+                    })).map(({ option, optionName }, index) => (
+                      <>
+                        {size(optionProvider.search_args) > 1 && index !== 0 ? <ReqoreTag label="AND" /> : null}
+                        <ReqoreTag label={optionName} intent="info" />
+                        {fixOperatorValue(option.op).map((op) => (
+                          <ReqoreTag label={op} color="#ff47a3" />
+                        ))}
+                        {option.value ? <ReqoreTag label={option.value?.toString()} intent="success" /> : null}
+                      </>
+                    ))}
+                  </>
+                )}
+              </>
+            </ReqoreTagGroup>
           </ReqorePanel>
-        </>
-      ) : null}
-      {/* This means that we are working with a record update */}
-      {recordType && optionProvider && supportsArguments[recordType] ? (
-        <ReqorePanel collapsible label={`${capitalize(recordType)} options`} padded rounded>
-          <RecordQueryArgs
-            type={recordType}
-            asList={supportsList[recordType]}
-            url={getUrlFromProvider(optionProvider, false, true)}
-            value={optionProvider?.[`${recordType}_args`]}
-            onChange={(_nm, val) => {
-              setOptionProvider((cur: IProviderType | null) => {
-                const result: IProviderType = {
-                  ...cur,
-                  [`${recordType}_args`]: val
-                } as IProviderType
-
-                return result
-              })
-            }}
-            hasOperators={supportsOperators[recordType] || false}
-          />
-        </ReqorePanel>
-      ) : null}
+        ) : null}
+      </ReqorePanel>
     </div>
   )
 }

@@ -1,11 +1,4 @@
-import {
-  ReqoreButton,
-  ReqoreControlGroup,
-  ReqoreMessage,
-  ReqorePanel,
-  ReqoreTag,
-  ReqoreTagGroup
-} from '@qoretechnologies/reqore'
+import { ReqoreButton, ReqoreControlGroup, ReqoreMessage, ReqorePanel, ReqoreTag } from '@qoretechnologies/reqore'
 import { cloneDeep, findKey, forEach, last } from 'lodash'
 import isArray from 'lodash/isArray'
 import map from 'lodash/map'
@@ -513,22 +506,6 @@ const Options = ({
                       allowed_values={options[optionName].allowed_values}
                     />
                   </ReqorePanel>
-                  {operators && size(operators) && size(other.op) ? (
-                    <>
-                      <Spacer size={10} />
-                      <ReqorePanel padded flat rounded customTheme={{ main: '#f7f7f7' }}>
-                        <ReqoreTagGroup>
-                          <ReqoreTag label="WHERE" />
-                          <ReqoreTag label={optionName} intent="info" />
-                          <ReqoreTag label="IS" />
-                          {fixOperatorValue(other.op).map((op) => (
-                            <ReqoreTag label={op} intent="info" />
-                          ))}
-                          {other.value ? <ReqoreTag label={other.value?.toString()} intent="success" /> : null}
-                        </ReqoreTagGroup>
-                      </ReqorePanel>
-                    </>
-                  ) : null}
                 </div>
               </SubField>
             </StyledOptionField>
@@ -536,7 +513,7 @@ const Options = ({
         )}
       </div>
       {size(fixedValue) === 0 && (
-        <ReqoreMessage intent="info" inverted flat>
+        <ReqoreMessage intent="info" inverted flat size="small">
           {t(noValueString || 'No options selected. Please add options from the list.')}
         </ReqoreMessage>
       )}

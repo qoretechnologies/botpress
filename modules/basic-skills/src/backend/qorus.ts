@@ -27,7 +27,7 @@ const createNodes = (data) => {
   }
 
   const skillTypeToUrl = {
-    apicall: 'callApiFromUi',
+    'api-call': 'callApiFromUi',
     search: 'searchRecordsFromUi',
     create: 'createRecordsFromUi',
     update: 'updateRecordsFromUi',

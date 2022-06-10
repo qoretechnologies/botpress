@@ -451,7 +451,7 @@ const PreviewProvider = (props: IConnectorFieldProps) => {
         ...value,
         ...((props?.value as IProviderType) || {})
       }}
-      onChange={(_name, val) => setValue(val)}
+      onChange={(_name, val) => setValue(val as any)}
     />
   )
 }
@@ -472,7 +472,7 @@ setupPreviews(PreviewProvider, {
           value: '123'
         }
       }
-    },
+    } as any,
     recordType: 'search'
   },
   Update: {

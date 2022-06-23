@@ -64,13 +64,15 @@ const StyledHeader = styled.h3`
   text-align: center;
 `
 
-export let providers: any = {
+export const providers: any = {
   type: {
     name: 'type',
     url: 'dataprovider/types',
     suffix: '',
     recordSuffix: '?action=type',
-    type: 'type'
+    type: 'type',
+    withDetails: true,
+    desc: 'Data type and custom record descriptions'
   },
   connection: {
     name: 'connection',
@@ -81,7 +83,8 @@ export let providers: any = {
     suffix: '/provider',
     recordSuffix: '/record',
     requiresRecord: true,
-    type: 'connection'
+    type: 'connection',
+    desc: 'Qorus user connections; access a data provider through a user connection'
   },
   remote: {
     name: 'remote',
@@ -92,7 +95,8 @@ export let providers: any = {
     suffix: '/provider',
     recordSuffix: '/record',
     requiresRecord: true,
-    type: 'remote'
+    type: 'remote',
+    desc: 'Qorus to Qorus remote connections; access a data provider through a remote Qorus instances (remote datasources and remote Qorus APIs)'
   },
   datasource: {
     name: 'datasource',
@@ -103,7 +107,8 @@ export let providers: any = {
     suffix: '/provider',
     recordSuffix: '/record',
     requiresRecord: true,
-    type: 'datasource'
+    type: 'datasource',
+    desc: 'Qorus database connections; access record-based data providers through a local datasource'
   },
   factory: {
     name: 'factory',
@@ -117,7 +122,8 @@ export let providers: any = {
     recordSuffix: '/record',
     requiresRecord: true,
     suffixRequiresOptions: true,
-    type: 'factory'
+    type: 'factory',
+    desc: 'Data provider factories for creating data providers from options'
   }
 }
 
@@ -133,7 +139,8 @@ export const configItemFactory = {
   recordSuffix: '',
   requiresRecord: false,
   suffixRequiresOptions: true,
-  type: 'factory'
+  type: 'factory',
+  desc: 'Data provider factories for creating data providers from options'
 }
 
 const MapperProvider = ({
@@ -160,10 +167,13 @@ const MapperProvider = ({
   requiresRequest,
   isRecordSearch,
   optionsChanged,
-  onReset
+  onReset,
+  optionProvider,
+  recordType
 }: any) => {
   const [wildcardDiagram, setWildcardDiagram] = useState(null)
   const [optionString, setOptionString] = useState('')
+  const [descriptions, setDescriptions] = useState<string[]>([])
 
   /* When the options hash changes, we want to update the query string. */
   useDebounce(
@@ -192,6 +202,10 @@ const MapperProvider = ({
     realProviders = omit(realProviders, ['datasource', 'type'])
   }
 
+  if (recordType) {
+    realProviders = omit(realProviders, ['type'])
+  }
+
   const handleProviderChange = (provider) => {
     setProvider((current) => {
       // Fetch the url of the provider
@@ -201,9 +215,9 @@ const MapperProvider = ({
         // Set loading
         setIsLoading(true)
         // Select the provider data
-        const { url, filter, inputFilter, outputFilter } = realProviders[provider]
+        const { url, filter, inputFilter, outputFilter, withDetails } = realProviders[provider]
         // Get the data
-        let { data, error } = await fetchData(url)
+        let { data, error } = await fetchData(`${url}${withDetails ? '/childDetails' : ''}`)
         // Remove loading
         setIsLoading(false)
         // Filter unwanted data if needed
@@ -220,16 +234,26 @@ const MapperProvider = ({
           }
         }
         // Save the children
-        let children = data.children || data
+        const children = data.children || data
         // Add new child
         setChildren([
           {
-            values: children.map((child) => ({
-              name: realProviders[provider].namekey ? child[realProviders[provider].namekey] : child,
-              desc: '',
-              url,
-              suffix: realProviders[provider].suffix
-            })),
+            values: children.map((child) => {
+              if (typeof child === 'string') {
+                return {
+                  name: realProviders[provider].namekey ? child[realProviders[provider].namekey] : child,
+                  desc: '',
+                  url,
+                  suffix: realProviders[provider].suffix
+                }
+              }
+
+              return {
+                ...child,
+                url,
+                suffix: realProviders[provider].suffix
+              }
+            }),
             value: null
           }
         ])
@@ -249,23 +273,35 @@ const MapperProvider = ({
     clear && clear(true)
     // Set loading
     setIsLoading(true)
+    const newSuffix = `${suffix}/childDetails`
     // Build the suffix
     let suffixString = realProviders[provider].suffixRequiresOptions
       ? optionString && optionString !== '' && size(options)
-        ? `${suffix}?${optionString}`
+        ? `${newSuffix}?${optionString}`
         : itemIndex === 1
         ? ''
-        : suffix
-      : suffix
+        : newSuffix
+      : newSuffix
     // Fetch the data
     const { data = {}, error } = await fetchData(`${url}/${value}${suffixString}`)
     if (error) {
-      console.error(`${url}/${value}${suffix}`, error)
+      console.error(`${url}/${value}${newSuffix}`, error)
       //setIsLoading(false);
       //return;
     }
     // Reset loading
     setIsLoading(false)
+
+    /* Setting the state of the descriptions hash. */
+    if (data.desc) {
+      // Add the description to the descriptions hash
+      setDescriptions((current): string[] => {
+        console.log(itemIndex, data.desc)
+        const newData = [...current]
+        newData[itemIndex] = data.desc
+        return newData
+      })
+    }
     // Add new child
     setChildren((current) => {
       // Update this item
@@ -286,26 +322,20 @@ const MapperProvider = ({
         })
         .filter((item) => item)
 
-      if (
-        data.has_type ||
-        isConfigItem ||
-        provider === 'factory' ||
-        (requiresRequest && data.supports_request) ||
-        (isRecordSearch && data.supports_read)
-      ) {
+      if (data.has_type || isConfigItem || provider === 'factory' || (requiresRequest && data.supports_request)) {
         ;(async () => {
           setIsLoading(true)
           if (type === 'outputs' && data.mapper_keys) {
             // Save the mapper keys
             setMapperKeys && setMapperKeys(data.mapper_keys)
           }
-
+          const newSuffix = `${suffix}/childDetails`
           suffixString = realProviders[provider].suffixRequiresOptions
             ? optionString && optionString !== '' && size(options)
               ? `${suffix}${realProviders[provider].recordSuffix}?${optionString}${
                   type === 'outputs' ? '&soft=true' : ''
                 }`
-              : `${suffix}`
+              : `${newSuffix}`
             : `${suffix}${realProviders[provider].recordSuffix}`
 
           // Fetch the record
@@ -320,13 +350,13 @@ const MapperProvider = ({
             type: realProviders[provider].type,
             name,
             is_api_call: requiresRequest,
-            desc: data.desc,
             supports_request: data.supports_request,
             supports_read: data.supports_read,
             supports_update: data.supports_update,
             supports_create: data.supports_create,
             supports_delete: data.supports_delete,
             can_manage_fields: record.data?.can_manage_fields,
+            descriptions: [...(optionProvider?.descriptions || []), ...descriptions, data.desc],
             path: `${url}/${value}`
               .replace(`${name}`, '')
               .replace(`${realProviders[provider].url}/`, '')
@@ -347,12 +377,22 @@ const MapperProvider = ({
         return [
           ...newItems,
           {
-            values: data.children.map((child) => ({
-              name: child,
-              desc: '',
-              url: `${url}/${value}${suffix}`,
-              suffix: ''
-            })),
+            values: data.children.map((child) => {
+              if (typeof child === 'string') {
+                return {
+                  name: child,
+                  desc: 'No description provided',
+                  url: `${url}/${value}${suffix}`,
+                  suffix: ''
+                }
+              }
+
+              return {
+                ...child,
+                url: `${url}/${value}${suffix}`,
+                suffix: ''
+              }
+            }),
             value: null
           }
         ]
@@ -395,6 +435,7 @@ const MapperProvider = ({
             supports_create: data.supports_create,
             supports_delete: data.supports_delete,
             name,
+            descriptions: [...(optionProvider?.descriptions || []), ...descriptions, data.desc],
             subtype: value === 'request' || value === 'response' ? value : undefined,
             path: `${url}/${value}`
               .replace(`${name}`, '')
@@ -437,6 +478,7 @@ const MapperProvider = ({
               supports_create: data.supports_create,
               supports_delete: data.supports_delete,
               can_manage_fields: record.data.can_manage_fields,
+              descriptions: [...(optionProvider?.descriptions || []), ...descriptions, data.desc],
               path: `${url}/${value}`
                 .replace(`${name}`, '')
                 .replace(`${realProviders[provider].url}/`, '')
@@ -456,7 +498,7 @@ const MapperProvider = ({
 
   const getDefaultItems = useMemo(
     () =>
-      map(realProviders, ({ name }) => ({ name, desc: '' })).filter((prov) =>
+      map(realProviders, ({ name, desc }) => ({ name, desc })).filter((prov) =>
         prov.name === 'null' ? canSelectNull : true
       ),
     []

@@ -49,6 +49,7 @@ export interface IProviderType extends TProviderTypeArgs, TProviderTypeSupports 
   supports_request?: boolean
   is_api_call?: boolean
   search_options?: IOptions
+  descriptions?: string[]
 }
 
 const supportsList = {
@@ -203,15 +204,19 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
               {
                 name: optionProvider.name,
                 url: providers[optionProvider.type].url,
-                suffix: providers[optionProvider.type].suffix
+                suffix: providers[optionProvider.type].suffix,
+                desc: optionProvider.descriptions?.[0]
               }
             ]
           },
           ...(optionProvider.path
             ? optionProvider?.path
                 .split('/')
-                .map((item) => ({ value: item, values: [{ name: item }] }))
-                .filter((predicate) => predicate && predicate.value !== '')
+                .filter((predicate) => predicate && predicate !== '')
+                .map((item, index) => ({
+                  value: item,
+                  values: [{ name: item, desc: optionProvider.descriptions?.[index + 1] }]
+                }))
             : [])
         ]
       : []
@@ -270,7 +275,7 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
 
             const value = newNodes.map((node) => node.value).join('/')
 
-            onChange?.(name, `${type}/${value}${val.optionsChanged ? `?options_changed` : ''}`)
+            onChange?.(name, `${type}/${value}${val.optionsChanged ? '?options_changed' : ''}`)
           } else {
             const value = nodes.map((node) => node.value).join('/')
             onChange?.(name, `${type}/${value}`)
@@ -312,6 +317,8 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
             display: inline ? 'inline-block' : 'block'
           }}
           onReset={reset}
+          optionProvider={optionProvider}
+          recordType={recordType}
         />
         {optionProvider?.desc && (
           <ReqoreMessage intent="info" flat inverted size="small">
@@ -510,6 +517,7 @@ const PreviewProvider = (props: IConnectorFieldProps) => {
     supports_update: true,
     supports_create: true,
     supports_delete: true,
+    descriptions: ['omquser description', 'bb_local description'],
     path: '/bb_local',
     use_args: true,
     search_options: {

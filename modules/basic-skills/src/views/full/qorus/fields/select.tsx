@@ -1,6 +1,12 @@
 // @ts-nocheck
 import { Button, Classes, Icon } from '@blueprintjs/core'
-import { ReqoreButton, ReqoreDropdown, ReqorePopover } from '@qoretechnologies/reqore'
+import {
+  ReqoreButton,
+  ReqoreControlGroup,
+  ReqoreDropdown,
+  ReqoreMessage,
+  ReqorePopover
+} from '@qoretechnologies/reqore'
 import { IReqoreButtonProps } from '@qoretechnologies/reqore/dist/components/Button'
 import { IReqoreIntent } from '@qoretechnologies/reqore/dist/constants/theme'
 import { includes } from 'lodash'
@@ -136,7 +142,7 @@ const SelectField = ({
   }
 
   const hasItemsWithDesc = (data) => {
-    return data.some((item) => getItemDescription(data.name))
+    return data.some((item) => getItemDescription(item.name))
   }
 
   if (!filteredItems || filteredItems.length === 0) {
@@ -148,7 +154,7 @@ const SelectField = ({
   }
 
   const getItemDescription = (itemName) => {
-    return items.find((item) => item.name === itemName)?.desc || 'No description'
+    return items.find((item) => item.name === itemName)?.desc
   }
 
   return (
@@ -156,30 +162,18 @@ const SelectField = ({
       {!filteredItems || filteredItems.length === 0 ? (
         <StringField value={t('NothingToSelect')} read_only disabled name={name} onChange={() => {}} />
       ) : (
-        <>
+        <ReqoreControlGroup fluid style={{ flexFlow: 'column' }}>
           {hasItemsWithDesc(items) && !forceDropdown ? (
             <>
-              <ReqorePopover
-                placement="top"
-                isReqoreComponent
-                component={ReqoreButton}
-                content={
-                  <ReactMarkdown>
-                    {value ? getItemDescription(value) || t('No description') : t('Please select')}
-                  </ReactMarkdown>
-                }
-                componentProps={
-                  {
-                    flat: true,
-                    rightIcon: 'WindowFill',
-                    onClick: () => setSelectDialogOpen(true),
-                    disabled,
-                    intent: value ? 'info' : undefined
-                  } as IReqoreButtonProps
-                }
+              <ReqoreButton
+                flat
+                rightIcon={'WindowFill'}
+                onClick={() => setSelectDialogOpen(true)}
+                disabled={disabled}
+                intent={value ? 'info' : undefined}
               >
                 {value ? value : placeholder || t('Please select')}
-              </ReqorePopover>
+              </ReqoreButton>
               {isSelectDialogOpen && (
                 <CustomDialog
                   isOpen
@@ -256,7 +250,14 @@ const SelectField = ({
               }
             />
           )}
-        </>
+          <div>
+            {getItemDescription(value) && (
+              <ReqoreMessage inverted intent="info" flat size="small">
+                {getItemDescription(value)}
+              </ReqoreMessage>
+            )}
+          </div>
+        </ReqoreControlGroup>
       )}
     </>
   )

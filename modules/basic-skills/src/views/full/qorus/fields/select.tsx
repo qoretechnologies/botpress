@@ -162,7 +162,7 @@ const SelectField = ({
       {!filteredItems || filteredItems.length === 0 ? (
         <StringField value={t('NothingToSelect')} read_only disabled name={name} onChange={() => {}} />
       ) : (
-        <ReqoreControlGroup fluid style={{ flexFlow: 'column' }}>
+        <ReqoreControlGroup style={{ flexFlow: 'column' }}>
           {hasItemsWithDesc(items) && !forceDropdown ? (
             <>
               <ReqoreButton

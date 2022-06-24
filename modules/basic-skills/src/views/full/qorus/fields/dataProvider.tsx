@@ -1,9 +1,8 @@
 import { setupPreviews } from '@previewjs/plugin-react/setup'
-import { ReqoreMessage, ReqorePanel, ReqoreTag, ReqoreTagGroup } from '@qoretechnologies/reqore'
+import { ReqorePanel, ReqoreTag, ReqoreTagGroup } from '@qoretechnologies/reqore'
 import { capitalize, cloneDeep, isEqual, last, map, reduce } from 'lodash'
 import size from 'lodash/size'
 import React, { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
 import { useDebounce } from 'react-use'
 import Spacer from '../components/Spacer'
 import { validateField } from '../validator'
@@ -320,13 +319,6 @@ const ConnectorField: React.FC<IConnectorFieldProps> = ({
           optionProvider={optionProvider}
           recordType={recordType}
         />
-        {optionProvider?.desc && (
-          <ReqoreMessage intent="info" flat inverted size="small">
-            <div>
-              <ReactMarkdown>{optionProvider.desc}</ReactMarkdown>
-            </div>
-          </ReqoreMessage>
-        )}
         {provider === 'factory' && optionProvider ? (
           <>
             <ReqorePanel collapsible label="Factory options" padded rounded>

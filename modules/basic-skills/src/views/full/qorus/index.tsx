@@ -1,11 +1,9 @@
 import { setupPreviews } from '@previewjs/plugin-react/setup'
-import { ReqoreMessage, ReqorePanel, ReqoreUIProvider } from '@qoretechnologies/reqore'
+import { ReqorePanel, ReqoreUIProvider } from '@qoretechnologies/reqore'
 import { map } from 'lodash'
 import React, { useEffect, useState } from 'react'
-import ReactMarkdown from 'react-markdown'
 import style from '../style.scss'
 import Spacer from './components/Spacer'
-import { StyledSubFieldMarkdown } from './components/SubField'
 import DataProvider, { IProviderType } from './fields/dataProvider'
 import SelectField from './fields/select'
 import { validateField } from './validator'
@@ -69,13 +67,6 @@ export const Qorus = ({ onValidChanged, onDataChanged, initialData }) => {
               setSkillType(v)
             }}
           />
-          {skillType && (
-            <ReqoreMessage intent="info" inverted size="small" flat>
-              <StyledSubFieldMarkdown>
-                <ReactMarkdown>{Skills[skillType]?.desc}</ReactMarkdown>
-              </StyledSubFieldMarkdown>
-            </ReqoreMessage>
-          )}
         </ReqorePanel>
         <Spacer size={10} />
         {skillType && (
